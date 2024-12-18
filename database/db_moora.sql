@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Generation Time: Dec 18, 2024 at 03:37 AM
+-- Generation Time: Dec 18, 2024 at 05:52 AM
 -- Server version: 8.0.30
 -- PHP Version: 8.3.13
 
@@ -60,7 +60,7 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('tr7SaK13jFasGO5sJLHZxsxzaaNQIep7yHEG1Eqa', 'U001', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiYWtoZXBDMkp4U2tlVWRDMlozUHJZRmZRbEc5ZXpqUjZ2dlMwemlHTiI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL0Rhc2hib2FyZCI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjMwOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvS3JpdGVyaWEiO31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7czo0OiJVMDAxIjt9', 1734493036);
+('tr7SaK13jFasGO5sJLHZxsxzaaNQIep7yHEG1Eqa', 'U001', '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36', 'YTo1OntzOjY6Il90b2tlbiI7czo0MDoiYWtoZXBDMkp4U2tlVWRDMlozUHJZRmZRbEc5ZXpqUjZ2dlMwemlHTiI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czozMToiaHR0cDovLzEyNy4wLjAuMTo4MDAwL0Rhc2hib2FyZCI7fXM6OToiX3ByZXZpb3VzIjthOjE6e3M6MzoidXJsIjtzOjMxOiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvRGFzaGJvYXJkIjt9czo1MDoibG9naW5fd2ViXzU5YmEzNmFkZGMyYjJmOTQwMTU4MGYwMTRjN2Y1OGVhNGUzMDk4OWQiO3M6NDoiVTAwMSI7fQ==', 1734500952);
 
 -- --------------------------------------------------------
 
@@ -132,11 +132,11 @@ CREATE TABLE `tbl_kriteria` (
 --
 
 INSERT INTO `tbl_kriteria` (`kriteria_id`, `nama_kriteria`, `bobot`, `type`) VALUES
-('K01', 'SKS Total', 20, 'Cost'),
-('K02', 'SKS Tempuh', 20, 'Benefit'),
-('K03', 'SKS Sisa', 10, 'Cost'),
-('K04', 'Studi Total', 20, 'Cost'),
-('K05', 'Studi Tempuh', 20, 'Benefit'),
+('K01', 'SKS Tempuh', 20, 'Benefit'),
+('K02', 'SKS Sisa', 10, 'Cost'),
+('K03', 'Studi Tempuh', 20, 'Benefit'),
+('K04', 'SKS Total', 20, 'Cost'),
+('K05', 'Studi Total', 20, 'Benefit'),
 ('K06', 'Studi Sisa', 10, 'Benefit');
 
 -- --------------------------------------------------------
