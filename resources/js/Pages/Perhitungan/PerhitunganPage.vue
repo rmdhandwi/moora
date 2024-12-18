@@ -82,7 +82,7 @@ watch(
 );
 
 const hitung = () => {
-     // Check if there are any students for the selected angkatan_id
+    // Check if there are any students for the selected angkatan_id
     const filteredData = dataMahasiswa.value.filter(
         (mahasiswa) => mahasiswa.angkatan_id === formPerhitungan.angkatan_id
     );
@@ -102,6 +102,7 @@ const hitung = () => {
     formPerhitungan.put(
         route("create.perhitungan", formPerhitungan.angkatan_id),
         {
+            onSuccess: () => ShowToast(),
             onError: () => {
                 toast.add({
                     severity: "error",

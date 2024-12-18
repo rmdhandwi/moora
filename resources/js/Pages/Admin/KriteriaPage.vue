@@ -121,7 +121,7 @@ const creteKriteria = () => {
 const confirm = useConfirm();
 const confirmEdit = (data) => {
     confirm.require({
-        message: `Anda ingin mengedit user : ${data.nama_kriteria}`,
+        message: `Anda ingin mengedit Kriteria : ${data.nama_kriteria}`,
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             icon: "pi pi-times",
@@ -176,7 +176,7 @@ const updateKriteria = () => {
 
 const confirmDelete = (data) => {
     confirm.require({
-        message: `Anda ingin menghapus user : ${data.nama_kriteria}`,
+        message: `Anda ingin menghapus Kriteria : ${data.nama_kriteria}`,
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             icon: "pi pi-times",
@@ -224,6 +224,7 @@ const confirmDelete = (data) => {
             <div class="flex items-center justify-between mb-4">
                 <span class="text-2xl font-bold">Data {{ props.title }}</span>
                 <Button
+                    v-if="dataKriteria.length < 6"
                     @click="addDialog"
                     unstyled
                     class="px-4 py-2 bg-blue-500 hover:-translate-x-1 text-white rounded-md transition-all hover:bg-blue-600"

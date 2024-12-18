@@ -1,6 +1,6 @@
 <script setup>
 import TemplateLayout from "@/Layouts/TemplateLayout.vue";
-import { DataTable, Column, Card } from "primevue";
+import { DataTable, Column, Card, Tag } from "primevue";
 import { defineProps, computed } from "vue";
 
 const props = defineProps({
@@ -10,6 +10,33 @@ const props = defineProps({
     optimizationData: Array, // Data optimasi bobot dan MOORA dari backend
 });
 
+// Fungsi untuk memberi class CSS berdasarkan nilai golongan
+const getGolonganClass = (golongan) => {
+    switch (golongan) {
+        case "Aman":
+            return "success";
+        case "Hati-Hati":
+            return "warn";
+        case "DO/Pindah":
+            return "danger";
+        default:
+            return "info";
+    }
+};
+
+// Fungsi untuk menentukan ikon berdasarkan golongan
+const getGolonganIcon = (golongan) => {
+    switch (golongan) {
+        case "Aman":
+            return "pi pi-check-circle"; // Ikon centang hijau
+        case "Hati-Hati":
+            return "pi pi-exclamation-triangle"; // Ikon peringatan kuning
+        case "DO/Pindah":
+            return "pi pi-times-circle"; // Ikon silang merah
+        default:
+            return "pi pi-info-circle"; // Ikon informasi biru
+    }
+};
 // Ambil kriteria unik dari data normalisasi
 // const uniqueCriteria = computed(() => {
 //     if (!props.normalizationData.length) return [];
@@ -50,17 +77,45 @@ const props = defineProps({
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25, 50]"
                         >
+                            <!-- Kolom ID Mahasiswa -->
                             <Column
                                 field="mahasiswa_id"
                                 header="ID Mahasiswa"
                             />
+
+                            <!-- Kolom Nama Mahasiswa -->
                             <Column
                                 field="nama_mahasiswa"
                                 header="Nama Mahasiswa"
                             />
+
+                            <!-- Kolom NPM -->
                             <Column field="npm" header="NPM" frozen />
 
+                            <!-- Kolom Nilai Akhir -->
                             <Column field="moora" header="Nilai Akhir" />
+
+                            <!-- Kolom Golongan dengan warna dinamis -->
+                            <Column header="Golongan">
+                                <template #body="slotProps">
+                                    <Tag
+                                        :severity="
+                                            getGolonganClass(
+                                                slotProps.data.golongan
+                                            )
+                                        "
+                                        :icon="
+                                            getGolonganIcon(
+                                                slotProps.data.golongan
+                                            )
+                                        "
+                                    >
+                                        {{ slotProps.data.golongan }}
+                                    </Tag>
+                                </template>
+                            </Column>
+
+                            <!-- Kolom Rank -->
                             <Column field="rank" header="Rank" />
                         </DataTable>
                     </template>

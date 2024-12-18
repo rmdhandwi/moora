@@ -16,6 +16,8 @@ const props = defineProps({
     title: String,
 });
 
+const role = props.auth.user.role;
+
 // State untuk mengontrol visibilitas sidebar
 const isSidebarOpen = ref(true);
 
@@ -125,6 +127,7 @@ const logout = (event) => {
                         </template>
                     </Button>
                     <Button
+                        v-if="role === 1"
                         unstyled
                         as="a"
                         :href="route('usersPage')"
@@ -210,7 +213,8 @@ const logout = (event) => {
                         :href="route('perhitunganPage')"
                         :class="[
                             'rounded-md p-3 gap-2 transition-all flex items-center',
-                            props.title === 'Perhitungan' || props.title === 'Hasil Perhitungan'
+                            props.title === 'Perhitungan' ||
+                            props.title === 'Hasil Perhitungan'
                                 ? 'bg-blue-500 text-white font-semibold hover:-translate-y-1'
                                 : 'hover:bg-blue-100 hover:-translate-y-1',
                         ]"

@@ -170,6 +170,24 @@ class Perhitungan extends Controller
             $studentOptimization['rank'] = $rank++;
         }
 
+        // Langkah 6: Membagi ke dalam 3 golongan berdasarkan nilai MOORA
+        $totalMahasiswa = count($optimizationData);
+
+        // Tentukan batas untuk setiap golongan
+        $golongan1Limit = ceil($totalMahasiswa * 0.1); // Top 10%
+        $golongan2Limit = ceil($totalMahasiswa * 0.5); // Top 50%
+
+        // Tambahkan golongan ke setiap mahasiswa
+        foreach ($optimizationData as $index => &$studentOptimization) {
+            if ($index < $golongan1Limit) {
+                $studentOptimization['golongan'] = 'Aman';
+            } elseif ($index < $golongan2Limit) {
+                $studentOptimization['golongan'] = 'Hati-Hati';
+            } else {
+                $studentOptimization['golongan'] = 'DO/Pindah';
+            }
+        }
+
 
         // Kirim data ke frontend
         $title = 'Hasil Perhitungan';

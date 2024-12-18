@@ -294,7 +294,7 @@ const confirmDelete = (data) => {
                         <div class="mt-2">
                             <label>Role</label>
                             <div
-                                class="items-center gap-4 grid grid-cols-2 mt-1"
+                                class="items-center gap-3 grid grid-cols-3 mt-1"
                             >
                                 <label>
                                     <input
@@ -319,14 +319,6 @@ const confirmDelete = (data) => {
                                         v-model="formUser.role"
                                     />
                                     Dosen
-                                </label>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        value="4"
-                                        v-model="formUser.role"
-                                    />
-                                    Mahasiswa
                                 </label>
                             </div>
                             <Message

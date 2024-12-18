@@ -23,11 +23,12 @@ class Kriteria extends Controller
     {
         // Validate the incoming request
         $request->validate([
-            'nama_kriteria' => 'required',
+            'nama_kriteria' => 'required|unique:tbl_kriteria,nama_kriteria',
             'bobot' => 'required|numeric|min:0|max:100',
             'type' => 'required|string|max:255',
         ], [
             '*.required' => 'Kolom wajib diisi',
+            'nama_kriteria.unique' => 'Nama kriteria telah digunakan',
             'bobot.max' => 'Bobot tidak boleh lebih dari 100',
             'bobot.min' => 'Bobot tidak boleh kurang dari 0',
         ]);
@@ -68,11 +69,12 @@ class Kriteria extends Controller
     {
         // Validate the incoming request
         $request->validate([
-            'nama_kriteria' => 'required',
+            'nama_kriteria' => 'required|unique:tbl_kriteria,nama_kriteria,' . $id . ',kriteria_id',
             'bobot' => 'required|numeric|min:0|max:100',
             'type' => 'required|string|max:255',
         ], [
             '*.required' => 'Kolom wajib diisi',
+            'nama_kriteria.unique' => 'Nama kriteria telah digunakan',
             'bobot.max' => 'Bobot tidak boleh lebih dari 100',
             'bobot.min' => 'Bobot tidak boleh kurang dari 0',
         ]);
