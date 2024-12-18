@@ -267,6 +267,7 @@ const confirmDelete = (data) => {
                                     :invalid="
                                         !!formKriteria.errors.nama_kriteria
                                     "
+                                    :disabled="dataDialog === 'edit'"
                                 />
                                 <label for="nama_kriteria">Nama Kriteria</label>
                             </FloatLabel>
@@ -419,13 +420,13 @@ const confirmDelete = (data) => {
                                         severity="info"
                                         outlined
                                     />
-                                    <Button
+                                    <!-- <Button
                                         size="small"
                                         @click="confirmDelete(data)"
                                         icon="pi pi-trash"
                                         severity="danger"
                                         outlined
-                                    />
+                                    /> -->
                                 </div>
                             </template>
                         </Column>

@@ -32,7 +32,7 @@ const props = defineProps({
 onMounted(() => {
     ShowToast();
     originalDataMahasiswa.value = props.mahasiswa.map((mahasiswa, index) => ({
-        index: index + 1,
+        index: index + 1, // Tambahkan indeks awal dari 1
         ...mahasiswa,
     }));
     dataMahasiswa.value = [...originalDataMahasiswa.value]; // Set initial data
@@ -72,11 +72,24 @@ watch(
     () => formPerhitungan.angkatan_id,
     (newValue) => {
         if (newValue) {
-            dataMahasiswa.value = originalDataMahasiswa.value.filter(
+            // Filter data berdasarkan angkatan_id
+            const filteredData = originalDataMahasiswa.value.filter(
                 (mahasiswa) => mahasiswa.angkatan_id === newValue
             );
+            
+            // Tambahkan index ulang dari 1
+            dataMahasiswa.value = filteredData.map((mahasiswa, index) => ({
+                ...mahasiswa,
+                index: index + 1,
+            }));
         } else {
-            dataMahasiswa.value = [...originalDataMahasiswa.value];
+            // Reset ke data asli dengan indeks awal
+            dataMahasiswa.value = originalDataMahasiswa.value.map(
+                (mahasiswa, index) => ({
+                    ...mahasiswa,
+                    index: index + 1,
+                })
+            );
         }
     }
 );

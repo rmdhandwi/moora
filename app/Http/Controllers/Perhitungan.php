@@ -174,7 +174,7 @@ class Perhitungan extends Controller
         $totalMahasiswa = count($optimizationData);
 
         // Tentukan batas untuk setiap golongan
-        $golongan1Limit = ceil($totalMahasiswa * 0.1); // Top 10%
+        $golongan1Limit = ceil($totalMahasiswa * 0.15); // Top 15%
         $golongan2Limit = ceil($totalMahasiswa * 0.5); // Top 50%
 
         // Tambahkan golongan ke setiap mahasiswa

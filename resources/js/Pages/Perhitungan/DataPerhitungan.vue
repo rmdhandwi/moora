@@ -114,9 +114,6 @@ const getGolonganIcon = (golongan) => {
                                     </Tag>
                                 </template>
                             </Column>
-
-                            <!-- Kolom Rank -->
-                            <Column field="rank" header="Rank" />
                         </DataTable>
                     </template>
                 </Card>

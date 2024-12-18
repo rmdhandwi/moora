@@ -56,11 +56,24 @@ watch(
     () => formSelect.angkatan_id,
     (newValue) => {
         if (newValue) {
-            dataMahasiswa.value = originalDataMahasiswa.value.filter(
+            // Filter data berdasarkan angkatan_id
+            const filteredData = originalDataMahasiswa.value.filter(
                 (mahasiswa) => mahasiswa.angkatan_id === newValue
             );
+            
+            // Tambahkan index ulang dari 1
+            dataMahasiswa.value = filteredData.map((mahasiswa, index) => ({
+                ...mahasiswa,
+                index: index + 1,
+            }));
         } else {
-            dataMahasiswa.value = [...originalDataMahasiswa.value];
+            // Reset ke data asli dengan indeks awal
+            dataMahasiswa.value = originalDataMahasiswa.value.map(
+                (mahasiswa, index) => ({
+                    ...mahasiswa,
+                    index: index + 1,
+                })
+            );
         }
     }
 );
