@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
+use App\Http\Controllers\Users;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Schema;
 
-class User extends Authenticatable
+class DosenModel extends Model
 {
     use HasFactory, Notifiable;
 
     public $timestamps = false;
-    protected $table = 'tbl_users';
-    protected $primaryKey = 'user_id';
+    protected $table = 'tbl_dosen';
+    protected $primaryKey = 'dosen_id';
     protected $keyType = 'string';
     // protected $guarded = [];
 
@@ -24,43 +25,44 @@ class User extends Authenticatable
         $this->fillable = Schema::getColumnListing($this->table);
     }
 
-    protected $hidden_ = [
-        'password',
-    ];
-
-    // Event model 'creating' untuk mengisi 'user_id'
+    // Event model 'creating' untuk mengisi 'dosen_id'
     protected static function boot()
     {
         parent::boot();
 
         // Event yang akan berjalan sebelum data pengguna dibuat
         static::creating(function ($user) {
-            $user->user_id = self::generateUserId();
+            $user->dosen_id = self::generateDosenId();
         });
     }
 
     // Fungsi untuk membuat kode pengguna
-    private static function generateUserId()
+    private static function generateDosenId()
     {
         // Ambil kode pengguna terakhir yang ada
-        $lastUser = self::orderBy('user_id', 'desc')->first();
+        $lastUser = self::orderBy('dosen_id', 'desc')->first();
 
-        // Jika belum ada kode pengguna, mulai dengan 'U001'
+        // Jika belum ada kode pengguna, mulai dengan 'D001'
         if (!$lastUser) {
-            return 'U001';
+            return 'D001';
         }
 
         // Ambil angka dari kode pengguna terakhir dan increment
-        $lastNumber = intval(substr($lastUser->user_id, 1));
+        $lastNumber = intval(substr($lastUser->dosen_id, 1));
         $newNumber = $lastNumber + 1;
 
-        // Format kode pengguna dengan 3 digit, misal: 'U002', 'U010'
-        return 'U' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
+        // Format kode pengguna dengan 3 digit, misal: 'D002', 'D010'
+        return 'D' . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
     }
 
-    public function dosen()
+    public function users()
     {
-        return $this->hasOne(DosenModel::class, 'user_id', 'user_id');
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function mahasiswa()
+    {
+        return $this->hasMany(MahasiswaModel::class, 'dosen_id', 'dosen_id');
     }
 
 }

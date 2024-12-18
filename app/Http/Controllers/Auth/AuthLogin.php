@@ -12,39 +12,41 @@ class AuthLogin extends Controller
 {
     public function login(Request $request)
     {
+        // Validasi input
         $request->validate([
-            'nama_pengguna' => 'required',
-            'kata_sandi'    => 'required',
+            'username' => 'required',
+            'password' => 'required',
         ], [
-            'nama_pengguna.required' => 'Nama pengguna harus diisi',
-            'kata_sandi.required'    => 'Kata sandi harus diisi',
+            'username.required' => 'Nama pengguna harus diisi',
+            'password.required' => 'Kata sandi harus diisi',
         ]);
 
-        // Cek apakah pengguna ada
-        $user = User::where('nama_pengguna', $request->nama_pengguna)->first();
+        // Cek apakah pengguna ada dengan mengubah username ke lowercase
+        $user = User::whereRaw('LOWER(username) = ?', [strtolower($request->username)])->first();
 
-        // Verifikasi kata sandi
-        if ($user && Hash::check($request->kata_sandi, $user->kata_sandi)) {
-            // Update status pengguna menjadi 1 (login)
-            $user->status = 1;
-            $user->save();
+        // Jika pengguna tidak ditemukan
+        if (!$user) {
+            return redirect()->back()->with([
+                'notif_status' => 'error',
+                'message' => 'Username Tidak terdaftar',
+            ]);
+        }
 
-            // Login pengguna dan regenerasi session
-            Auth::login($user);
+        // Coba untuk melakukan otentikasi
+        if (Auth::attempt(['username' => $user->username, 'password' => $request->password])) {
             $request->session()->regenerate();
 
+            // Redirect ke dashboard jika login berhasil
             return redirect()->route('dashboard')->with([
                 'notif_status' => 'success',
-                'message'      => 'Selamat Datang.',
-                'notif_show'   => true,
+                'message' => 'Selamat Datang, ' . $user->username . '.',
             ]);
         }
 
         // Jika login gagal
         return redirect()->back()->with([
             'notif_status' => 'error',
-            'message'      => 'Kode pengguna atau kata sandi salah.',
-            'notif_show'   => true,
+            'message' => 'Username atau Password salah.',
         ]);
     }
 
@@ -53,25 +55,24 @@ class AuthLogin extends Controller
     {
         // Validasi data dari form
         $request->validate([
-            'nama_pengguna' => 'required|unique:users,nama_pengguna|max:20',
-            'kata_sandi'    => 'required|min:8|max:16',
+            'username'      => 'required|unique:users,username|max:20',
+            'password'      => 'required|min:8|max:16',
             'role'          => 'required|numeric',
         ], [
-            'nama_pengguna.required' => 'Nama pengguna harus diisi',
-            'nama_pengguna.unique'   => 'Nama pengguna telah digunakan!',
-            'nama_pengguna.max'      => 'Nama pengguna maksimal 20 karakter',
-            'kata_sandi.required'    => 'Kata sandi harus diisi',
-            'kata_sandi.min'         => 'Kata sandi minimal 8 karakter',
-            'kata_sandi.max'         => 'Kata sandi minimal 16 karakter',
-            'role.required'          => 'Role harus diisi',
+            'username.required'     => 'Nama pengguna harus diisi',
+            'username.unique'       => 'Nama pengguna telah digunakan!',
+            'username.max'          => 'Nama pengguna maksimal 20 karakter',
+            'password.required'     => 'Kata sandi harus diisi',
+            'password.min'          => 'Kata sandi minimal 8 karakter',
+            'password.max'          => 'Kata sandi minimal 16 karakter',
+            'role.required'         => 'Role harus diisi',
         ]);
 
         // Buat pengguna baru
         $insert = User::create([
-            'nama_pengguna'   => $request->nama_pengguna,
-            'kata_sandi'      => Hash::make($request->kata_sandi), // Enkripsi kata sandi
-            'role'            => $request->role,
-            'status'          => 0,
+            'username'   => $request->username,
+            'password'   => Hash::make($request->password), // Enkripsi kata sandi
+            'role'       => $request->role,
         ]);
 
         // Periksa apakah penyimpanan berhasil
@@ -79,16 +80,13 @@ class AuthLogin extends Controller
             return redirect()->back()->with([
                 'notif_status' => 'success',
                 'message'      => 'Berhasil mendaftarkan Akun.',
-                'notif_show'   => true,
             ]);
         } else {
-             // Jika gagal mendaftarkan akun
+            // Jika gagal mendaftarkan akun
             return redirect()->back()->with([
                 'notif_status' => 'error',
                 'message'      => 'Gagal mendaftarkan Akun.',
-                'notif_show'   => true,
             ]);
         }
     }
-
 }

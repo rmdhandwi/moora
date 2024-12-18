@@ -36,7 +36,7 @@ const MyPreset = definePreset(Aura, {
     },
 });
 
-const appName = "Moora";
+const appName = "SPK-MASMA";
 
 createInertiaApp({
     title: (title) => `${appName} | ${title}`,

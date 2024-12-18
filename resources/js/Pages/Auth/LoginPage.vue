@@ -13,68 +13,49 @@ import { useForm, Head, router } from "@inertiajs/vue3";
 import { onMounted, ref } from "vue";
 
 // Menerima data flash dari server untuk notifikasi
-const pageChack = defineProps({
+const props = defineProps({
     flash: Object,
+});
+
+// Cek notifikasi saat komponen di-mount
+onMounted(() => {
+    setTimeout(() => {
+        ShowToast();
+    }, 500);
 });
 
 // Fungsi untuk menampilkan notifikasi jika ada pesan flash
 const toast = useToast();
 const ShowToast = () => {
-    if (pageChack.flash.notif && pageChack.flash.message) {
+    if (props.flash.notif && props.flash.message) {
         toast.add({
-            severity: pageChack.flash.notif || "info", // Gunakan 'info' sebagai default jika tidak ada notif
+            severity: props.flash.notif || "info", // Gunakan 'info' sebagai default jika tidak ada notif
             summary:
-                pageChack.flash.notif.charAt(0).toUpperCase() +
-                pageChack.flash.notif.slice(1), // Kapitalisasi huruf pertama
-            detail: pageChack.flash.message,
+                props.flash.notif.charAt(0).toUpperCase() +
+                props.flash.notif.slice(1), // Kapitalisasi huruf pertama
+            detail: props.flash.message,
             life: 4000,
             group: "tc",
         });
     }
 };
 
-// Cek notifikasi saat komponen di-mount
-onMounted(() => {
-    if (pageChack.flash.show) {
-        setTimeout(() => ShowToast(), 500);
-    }
-});
-
-// Menyimpan status loading saat merefresh halaman
-const refrashLoading = ref(false);
-
-// Fungsi untuk merefresh halaman
-const refresh = () => {
-    refrashLoading.value = true;
-    router.visit(route("login"), {
-        preserveScroll: true,
-        onSuccess: () => {
-            refrashLoading.value = false;
-            formLogin.reset();
-        },
-    });
-};
-
 // Data formulir login
 const formLogin = useForm({
-    nama_pengguna: "",
-    kata_sandi: "",
+    username: "",
+    password: "",
 });
 
-// Fungsi submit untuk login
+// Fungsi untuk menangani pengiriman form login
 const LoginSubmit = () => {
     formLogin.post(route("LoginSubmit"), {
         onSuccess: () => {
-            // Cek jika login berhasil, arahkan ke dashboard
-            if (pageChack.flash.notif === "success") {
+            if (props.flash.notif === "success") {
                 router.visit(route("dashboard"));
             } else {
+                formLogin.reset();
                 ShowToast();
             }
-        },
-        onError: () => {
-            // Jika terjadi kesalahan, tampilkan notifikasi error
-            ShowToast();
         },
     });
 };
@@ -83,62 +64,80 @@ const LoginSubmit = () => {
 <template>
     <Toast position="top-center" group="tc" />
     <Head title="Selamat Datang" />
-    <div class="flex flex-col justify-center min-h-screen items-center">
-        <div class="flex mb-4">
+    <div
+        class="relative flex flex-col justify-center min-h-screen items-center bg-gray-100"
+    >
+        <div class="absolute inset-0">
+            <img
+                src="image/bg.jpg"
+                alt="Background"
+                class="w-full h-full object-cover"
+            />
+            <div
+                class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-800 opacity-70"
+            ></div>
+        </div>
+        <div class="flex mb-4 z-10 items-center">
             <div class="logo">
-                <img src="image/logo/favicon.ico" alt="logo.png" />
+                <img
+                    src="image/logo/android-chrome-512x512.png"
+                    alt="logo.png"
+                    class="h-[100px] w-[100px]"
+                />
             </div>
-            <div class="judul ms-3 font-bold text-2xl">
-                <h1>Judul Aplikasi</h1>
+            <div class="judul ms-3 font-bold text-2xl text-white">
+                <h1>SPK | MASMA</h1>
             </div>
         </div>
-        <Card class="w-full md:w-1/3 shadow-lg p-6">
+        <Card
+            unstyled
+            class="w-full md:w-2/4 sm:w-2/4 lg:w-[25%] bg-white bg-opacity-50 rounded-lg backdrop-blur-md p-6 z-10"
+        >
             <template #content>
                 <form @submit.prevent="LoginSubmit">
-                    <div class="flex flex-col gap-2 mb-6">
-                        <FloatLabel variant="on">
+                    <div class="flex flex-col mb-6">
+                        <FloatLabel variant="in">
                             <InputText
-                                id="nama_pengguna"
-                                v-model="formLogin.nama_pengguna"
+                                id="username"
+                                v-model="formLogin.username"
                                 class="w-full"
-                                :invalid="!!formLogin.errors.nama_pengguna"
-                                placeholder="Nama Pengguna"
+                                :invalid="!!formLogin.errors.username"
                             />
-                            <label for="nama_pengguna">Nama Pengguna</label>
+                            <label for="username">Username</label>
                         </FloatLabel>
                         <Message
-                            v-if="formLogin.errors.nama_pengguna"
+                            v-if="formLogin.errors.username"
                             severity="error"
                             size="small"
                             variant="simple"
-                            >{{ formLogin.errors.nama_pengguna }}</Message
+                            >{{ formLogin.errors.username }}</Message
                         >
                     </div>
-                    <div class="flex flex-col gap-2 mb-6">
-                        <FloatLabel variant="on">
+                    <div class="flex flex-col mb-6">
+                        <FloatLabel variant="in">
                             <Password
                                 fluid
                                 toggleMask
-                                id="kata_sandi"
-                                v-model="formLogin.kata_sandi"
-                                :invalid="!!formLogin.errors.kata_sandi"
-                                placeholder="Kata Sandi"
+                                id="password"
+                                :feedback="false"
+                                v-model="formLogin.password"
+                                :invalid="!!formLogin.errors.password"
                             />
-                            <label for="kata_sandi">Kata Sandi</label>
+                            <label for="password">Password</label>
                         </FloatLabel>
                         <Message
-                            v-if="formLogin.errors.kata_sandi"
+                            v-if="formLogin.errors.password"
                             severity="error"
                             size="small"
                             variant="simple"
-                            >{{ formLogin.errors.kata_sandi }}</Message
+                            >{{ formLogin.errors.password }}</Message
                         >
                     </div>
                     <div>
                         <Button
+                            fluid
                             severity="info"
                             class="w-full"
-                            size="small"
                             label="Masuk"
                             type="submit"
                         />
@@ -148,3 +147,24 @@ const LoginSubmit = () => {
         </Card>
     </div>
 </template>
+
+<style scoped>
+/* Tambahkan gaya tambahan di sini */
+body {
+    font-family: "Arial", sans-serif;
+}
+
+h1 {
+    color: #ffffff; /* Warna teks judul */
+}
+
+input:focus,
+.p-inputtext:focus {
+    border-color: #3b82f6; /* Warna border saat fokus */
+    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5); /* Bayangan saat fokus */
+}
+
+button {
+    transition: background-color 0.3s ease; /* Transisi untuk tombol */
+}
+</style>

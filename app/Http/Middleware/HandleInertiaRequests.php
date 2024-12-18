@@ -23,6 +23,8 @@ class HandleInertiaRequests extends Middleware
         return parent::version($request);
     }
 
+
+
     /**
      * Define the props that are shared by default.
      *
@@ -35,12 +37,12 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
-            'flash' => [   
-                'notif'     => fn ()  =>$request->session()->get('notif_status'),
-                'message'   => fn ()  =>$request->session()->get('message'),     
-                'show'      => fn ()  =>$request->session()->get('notif_show'),
+            'flash' => [
+                'notif'     => fn()  => $request->session()->get('notif_status'),
+                'message'   => fn()  => $request->session()->get('message'),
+                'show'      => fn()  => $request->session()->get('show'),
             ],
-            'ziggy' => fn () => [
+            'ziggy' => fn() => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
             ],
