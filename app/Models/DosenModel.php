@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Http\Controllers\Users;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
@@ -63,6 +63,11 @@ class DosenModel extends Model
     public function mahasiswa()
     {
         return $this->hasMany(MahasiswaModel::class, 'dosen_id', 'dosen_id');
+    }
+
+    public function angakatan()
+    {
+        return $this->hasOne(AngkatanModel::class, 'dosen_id', 'dosen_id');
     }
 
 }

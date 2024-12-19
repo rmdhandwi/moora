@@ -60,7 +60,7 @@ watch(
             const filteredData = originalDataMahasiswa.value.filter(
                 (mahasiswa) => mahasiswa.angkatan_id === newValue
             );
-            
+
             // Tambahkan index ulang dari 1
             dataMahasiswa.value = filteredData.map((mahasiswa, index) => ({
                 ...mahasiswa,
@@ -309,6 +309,9 @@ const confirmDelete = (data) => {
             <div class="flex items-center justify-between mb-4">
                 <span class="text-2xl font-bold">Data {{ props.title }}</span>
                 <Button
+                    v-if="
+                        props.auth.user.role === 1 || props.auth.user.role === 2
+                    "
                     @click="addDialog"
                     unstyled
                     class="px-4 py-2 bg-blue-500 hover:-translate-x-1 text-white rounded-md transition-all hover:bg-blue-600"
@@ -342,241 +345,282 @@ const confirmDelete = (data) => {
                     "
                 >
                     <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-3 mt-2">
-                        <div>
-                            <FloatLabel variant="on">
-                                <Select
-                                    v-model="formMahasiswa.angkatan_id"
-                                    inputId="angkatan"
-                                    :options="props.angkatan"
-                                    optionLabel="tahun_angkatan"
-                                    optionValue="angkatan_id"
-                                    fluid
-                                    :invalid="
-                                        !!formMahasiswa.errors.angkatan_id
-                                    "
-                                />
-                                <label for="angkatan">Tahun Angkatan</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="formMahasiswa.errors.angkatan_id"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{ formMahasiswa.errors.angkatan_id }}</Message
-                            >
-                        </div>
-
-                        <div>
-                            <FloatLabel variant="on">
-                                <Select
-                                    v-model="formMahasiswa.dosen_id"
-                                    inputId="dosen"
-                                    :options="props.dosen"
-                                    optionLabel="nama_dosen"
-                                    optionValue="dosen_id"
-                                    fluid
-                                    :invalid="!!formMahasiswa.errors.dosen_id"
-                                />
-                                <label for="dosen">Dosen Pembimbing</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="formMahasiswa.errors.dosen_id"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{ formMahasiswa.errors.dosen_id }}</Message
-                            >
-                        </div>
-
-                        <div>
-                            <FloatLabel variant="on">
-                                <InputText
-                                    id="nama_mahasiswa"
-                                    fluid
-                                    v-model="formMahasiswa.nama_mahasiswa"
-                                    :invalid="
-                                        !!formMahasiswa.errors.nama_mahasiswa
-                                    "
-                                />
-                                <label for="nama_mahasiswa"
-                                    >Nama Mahasiswa</label
+                        <template
+                            v-if="
+                                props.auth.user.role === 1 ||
+                                props.auth.user.role === 2
+                            "
+                        >
+                            <div>
+                                <FloatLabel variant="on">
+                                    <Select
+                                        v-model="formMahasiswa.angkatan_id"
+                                        inputId="angkatan"
+                                        :options="props.angkatan"
+                                        optionLabel="tahun_angkatan"
+                                        optionValue="angkatan_id"
+                                        fluid
+                                        :invalid="
+                                            !!formMahasiswa.errors.angkatan_id
+                                        "
+                                    />
+                                    <label for="angkatan">Tahun Angkatan</label>
+                                </FloatLabel>
+                                <Message
+                                    v-if="formMahasiswa.errors.angkatan_id"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.angkatan_id
+                                    }}</Message
                                 >
-                            </FloatLabel>
-                            <Message
-                                v-if="!!formMahasiswa.errors.nama_mahasiswa"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{
-                                    formMahasiswa.errors.nama_mahasiswa
-                                }}</Message
-                            >
-                        </div>
+                            </div>
 
-                        <div>
-                            <FloatLabel variant="on">
-                                <InputText
-                                    inputId="npm"
-                                    fluid
-                                    v-model="formMahasiswa.npm"
-                                    :invalid="!!formMahasiswa.errors.npm"
-                                />
-                                <label for="npm">NPM</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="!!formMahasiswa.errors.npm"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{ formMahasiswa.errors.npm }}</Message
-                            >
-                        </div>
+                            <div>
+                                <FloatLabel variant="on">
+                                    <Select
+                                        v-model="formMahasiswa.dosen_id"
+                                        inputId="dosen"
+                                        :options="props.dosen"
+                                        optionLabel="nama_dosen"
+                                        optionValue="dosen_id"
+                                        fluid
+                                        :invalid="
+                                            !!formMahasiswa.errors.dosen_id
+                                        "
+                                    />
+                                    <label for="dosen">Dosen Pembimbing</label>
+                                </FloatLabel>
+                                <Message
+                                    v-if="formMahasiswa.errors.dosen_id"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.dosen_id
+                                    }}</Message
+                                >
+                            </div>
 
-                        <div>
-                            <FloatLabel variant="on">
-                                <InputNumber
-                                    inputId="sks_tempuh"
-                                    mode="decimal"
-                                    showButtons
-                                    :step="1"
-                                    :min="0"
-                                    :max="9999"
-                                    fluid
-                                    v-model="formMahasiswa.sks_tempuh"
-                                    :invalid="!!formMahasiswa.errors.sks_tempuh"
-                                />
-                                <label for="sks_tempuh">SKS Tempuh</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="!!formMahasiswa.errors.sks_tempuh"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{ formMahasiswa.errors.sks_tempuh }}</Message
-                            >
-                        </div>
+                            <div>
+                                <FloatLabel variant="on">
+                                    <InputText
+                                        id="nama_mahasiswa"
+                                        fluid
+                                        v-model="formMahasiswa.nama_mahasiswa"
+                                        :invalid="
+                                            !!formMahasiswa.errors
+                                                .nama_mahasiswa
+                                        "
+                                    />
+                                    <label for="nama_mahasiswa"
+                                        >Nama Mahasiswa</label
+                                    >
+                                </FloatLabel>
+                                <Message
+                                    v-if="!!formMahasiswa.errors.nama_mahasiswa"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.nama_mahasiswa
+                                    }}</Message
+                                >
+                            </div>
 
-                        <div>
-                            <FloatLabel variant="on">
-                                <InputNumber
-                                    inputId="studi_tempuh"
-                                    mode="decimal"
-                                    showButtons
-                                    :step="1"
-                                    :min="0"
-                                    :max="9999"
-                                    fluid
-                                    v-model="formMahasiswa.studi_tempuh"
-                                    :invalid="
-                                        !!formMahasiswa.errors.studi_tempuh
-                                    "
-                                />
-                                <label for="studi_tempuh">Studi Tempuh</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="!!formMahasiswa.errors.studi_tempuh"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{
-                                    formMahasiswa.errors.studi_tempuh
-                                }}</Message
-                            >
-                        </div>
+                            <div>
+                                <FloatLabel variant="on">
+                                    <InputText
+                                        inputId="npm"
+                                        fluid
+                                        v-model="formMahasiswa.npm"
+                                        :invalid="!!formMahasiswa.errors.npm"
+                                    />
+                                    <label for="npm">NPM</label>
+                                </FloatLabel>
+                                <Message
+                                    v-if="!!formMahasiswa.errors.npm"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{ formMahasiswa.errors.npm }}</Message
+                                >
+                            </div>
+                        </template>
 
-                        <div>
-                            <FloatLabel variant="on">
-                                <InputNumber
-                                    inputId="sks_total"
-                                    mode="decimal"
-                                    :min="144"
-                                    :max="144"
-                                    disabled
-                                    fluid
-                                    v-model="sks_total"
-                                    :invalid="!!formMahasiswa.errors.sks_total"
-                                />
-                                <label for="sks_total">SKS Total</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="!!formMahasiswa.errors.sks_total"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{ formMahasiswa.errors.sks_total }}</Message
-                            >
-                        </div>
+                        <template
+                            v-if="
+                                props.auth.user.role === 1 ||
+                                props.auth.user.role === 3
+                            "
+                        >
+                            <div>
+                                <FloatLabel variant="on">
+                                    <InputNumber
+                                        inputId="sks_tempuh"
+                                        mode="decimal"
+                                        showButtons
+                                        :step="1"
+                                        :min="0"
+                                        :max="9999"
+                                        fluid
+                                        v-model="formMahasiswa.sks_tempuh"
+                                        :invalid="
+                                            !!formMahasiswa.errors.sks_tempuh
+                                        "
+                                    />
+                                    <label for="sks_tempuh">SKS Tempuh</label>
+                                </FloatLabel>
+                                <Message
+                                    v-if="!!formMahasiswa.errors.sks_tempuh"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.sks_tempuh
+                                    }}</Message
+                                >
+                            </div>
 
-                        <div>
-                            <FloatLabel variant="on">
-                                <InputNumber
-                                    inputId="studi_total"
-                                    mode="decimal"
-                                    :min="14"
-                                    :max="14"
-                                    disabled
-                                    fluid
-                                    v-model="studi_total"
-                                    :invalid="
-                                        !!formMahasiswa.errors.studi_total
-                                    "
-                                />
-                                <label for="studi_total">Studi Total</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="!!formMahasiswa.errors.studi_total"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{ formMahasiswa.errors.studi_total }}</Message
-                            >
-                        </div>
+                            <div>
+                                <FloatLabel variant="on">
+                                    <InputNumber
+                                        inputId="studi_tempuh"
+                                        mode="decimal"
+                                        showButtons
+                                        :step="1"
+                                        :min="0"
+                                        :max="9999"
+                                        fluid
+                                        v-model="formMahasiswa.studi_tempuh"
+                                        :invalid="
+                                            !!formMahasiswa.errors.studi_tempuh
+                                        "
+                                    />
+                                    <label for="studi_tempuh"
+                                        >Studi Tempuh</label
+                                    >
+                                </FloatLabel>
+                                <Message
+                                    v-if="!!formMahasiswa.errors.studi_tempuh"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.studi_tempuh
+                                    }}</Message
+                                >
+                            </div>
 
-                        <div>
-                            <FloatLabel variant="on">
-                                <InputNumber
-                                    inputId="sks_sisa"
-                                    mode="decimal"
-                                    :min="0"
-                                    :max="144"
-                                    disabled
-                                    fluid
-                                    v-model="sks_sisa"
-                                    :invalid="!!formMahasiswa.errors.sks_sisa"
-                                />
-                                <label for="sks_sisa">SKS Sisa</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="!!formMahasiswa.errors.sks_sisa"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{ formMahasiswa.errors.sks_sisa }}</Message
-                            >
-                        </div>
+                            <div>
+                                <FloatLabel variant="on">
+                                    <InputNumber
+                                        inputId="sks_total"
+                                        mode="decimal"
+                                        :min="144"
+                                        :max="144"
+                                        disabled
+                                        fluid
+                                        v-model="sks_total"
+                                        :invalid="
+                                            !!formMahasiswa.errors.sks_total
+                                        "
+                                    />
+                                    <label for="sks_total">SKS Total</label>
+                                </FloatLabel>
+                                <Message
+                                    v-if="!!formMahasiswa.errors.sks_total"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.sks_total
+                                    }}</Message
+                                >
+                            </div>
 
-                        <div>
-                            <FloatLabel variant="on">
-                                <InputNumber
-                                    inputId="sks_sisa"
-                                    mode="decimal"
-                                    :min="0"
-                                    :max="14"
-                                    disabled
-                                    fluid
-                                    v-model="studi_sisa"
-                                    :invalid="!!formMahasiswa.errors.studi_sisa"
-                                />
-                                <label for="studi_sisa">Studi Sisa</label>
-                            </FloatLabel>
-                            <Message
-                                v-if="!!formMahasiswa.errors.studi_sisa"
-                                severity="error"
-                                size="small"
-                                variant="simple"
-                                >{{ formMahasiswa.errors.studi_sisa }}</Message
-                            >
-                        </div>
+                            <div>
+                                <FloatLabel variant="on">
+                                    <InputNumber
+                                        inputId="studi_total"
+                                        mode="decimal"
+                                        :min="14"
+                                        :max="14"
+                                        disabled
+                                        fluid
+                                        v-model="studi_total"
+                                        :invalid="
+                                            !!formMahasiswa.errors.studi_total
+                                        "
+                                    />
+                                    <label for="studi_total">Studi Total</label>
+                                </FloatLabel>
+                                <Message
+                                    v-if="!!formMahasiswa.errors.studi_total"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.studi_total
+                                    }}</Message
+                                >
+                            </div>
+
+                            <div>
+                                <FloatLabel variant="on">
+                                    <InputNumber
+                                        inputId="sks_sisa"
+                                        mode="decimal"
+                                        :min="0"
+                                        :max="144"
+                                        disabled
+                                        fluid
+                                        v-model="sks_sisa"
+                                        :invalid="
+                                            !!formMahasiswa.errors.sks_sisa
+                                        "
+                                    />
+                                    <label for="sks_sisa">SKS Sisa</label>
+                                </FloatLabel>
+                                <Message
+                                    v-if="!!formMahasiswa.errors.sks_sisa"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.sks_sisa
+                                    }}</Message
+                                >
+                            </div>
+
+                            <div>
+                                <FloatLabel variant="on">
+                                    <InputNumber
+                                        inputId="sks_sisa"
+                                        mode="decimal"
+                                        :min="0"
+                                        :max="14"
+                                        disabled
+                                        fluid
+                                        v-model="studi_sisa"
+                                        :invalid="
+                                            !!formMahasiswa.errors.studi_sisa
+                                        "
+                                    />
+                                    <label for="studi_sisa">Studi Sisa</label>
+                                </FloatLabel>
+                                <Message
+                                    v-if="!!formMahasiswa.errors.studi_sisa"
+                                    severity="error"
+                                    size="small"
+                                    variant="simple"
+                                    >{{
+                                        formMahasiswa.errors.studi_sisa
+                                    }}</Message
+                                >
+                            </div>
+                        </template>
                     </div>
                     <div class="flex justify-end items-center gap-2 mt-6">
                         <Button
@@ -632,7 +676,12 @@ const confirmDelete = (data) => {
                                 <div
                                     class="grid md:grid-cols-2 sm:grid-cols-1 gap-4 w-full md:w-[50%]"
                                 >
-                                    <div>
+                                    <div
+                                        v-if="
+                                            props.auth.user.role === 1 ||
+                                            props.auth.user.role === 2
+                                        "
+                                    >
                                         <FloatLabel variant="on">
                                             <Select
                                                 v-model="formSelect.angkatan_id"
@@ -694,7 +743,6 @@ const confirmDelete = (data) => {
                         </template>
 
                         <Column field="index" header="No" />
-                        <Column field="mahasiswa_id" header="Kode Mahasiswa" />
                         <Column frozen field="npm" header="NPM" />
                         <Column
                             field="angkatan.tahun_angkatan"
@@ -705,15 +753,26 @@ const confirmDelete = (data) => {
                             header="Dosen Pembimbing"
                         />
                         <Column
+                            frozen
                             field="nama_mahasiswa"
                             header="Nama Mahasiswa"
                         />
-                        <Column field="sks_total" header="Total SKS" />
-                        <Column field="sks_tempuh" header="SKS Tempuh" />
-                        <Column field="sks_sisa" header="SKS Sisa" />
-                        <Column field="studi_total" header="Total Studi" />
-                        <Column field="studi_tempuh" header="Studi Tempuh" />
-                        <Column field="studi_sisa" header="Studi Sisa" />
+                        <template
+                            v-if="
+                                props.auth.user.role == 3 ||
+                                props.auth.user.role == 1
+                            "
+                        >
+                            <Column field="sks_total" header="Total SKS" />
+                            <Column field="sks_tempuh" header="SKS Tempuh" />
+                            <Column field="sks_sisa" header="SKS Sisa" />
+                            <Column field="studi_total" header="Total Studi" />
+                            <Column
+                                field="studi_tempuh"
+                                header="Studi Tempuh"
+                            />
+                            <Column field="studi_sisa" header="Studi Sisa" />
+                        </template>
 
                         <Column header="Opsi" frozen alignFrozen="right">
                             <template #body="{ data }">

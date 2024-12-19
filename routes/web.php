@@ -21,6 +21,8 @@ Route::middleware('guest')->group(function () {
     })->name('login');
 });
 
+
+
 Route::middleware('auth')->group(function () {
 
     // Rute halaman dashboard
@@ -52,7 +54,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('Mahasiswa/{id}/delete', [Mahasiswa::class, 'destroy'])->name('destroy.mahasiswa');
 
     Route::get('Perhitungan', [Perhitungan::class, 'perhitunganPage'])->name('perhitunganPage');
-    Route::put('Perhitungan/{id}/moora', [Perhitungan::class, 'store'])->name('create.perhitungan');
+    Route::put('Perhitungan/{id}/moora/admin', [Perhitungan::class, 'store'])->name('put.perhitungan');
+    Route::put('Perhitungan/{id}/moora/dosen', [Perhitungan::class, 'create'])->name('create.perhitungan');
 });
 
 require __DIR__ . '/auth.php';

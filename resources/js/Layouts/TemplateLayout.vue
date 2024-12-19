@@ -98,7 +98,7 @@ const logout = (event) => {
         <!-- Sidebar -->
         <aside
             :class="isSidebarOpen ? 'w-64' : 'w-0'"
-            class="bg-white shadow-md transition-width duration-300 overflow-hidden"
+            class="bg-white shadow-md transition-width duration-300 overflow-y-auto h-screen"
         >
             <div class="p-4">
                 <h1
@@ -127,7 +127,7 @@ const logout = (event) => {
                         </template>
                     </Button>
                     <Button
-                        v-if="role === 1"
+                        v-if="role === 1 || role === 2"
                         unstyled
                         as="a"
                         :href="route('usersPage')"
@@ -144,6 +144,7 @@ const logout = (event) => {
                         </template>
                     </Button>
                     <Button
+                        v-if="role === 1 || role === 2"
                         unstyled
                         as="a"
                         :href="route('dosenPage')"
@@ -160,6 +161,7 @@ const logout = (event) => {
                         </template>
                     </Button>
                     <Button
+                        v-if="role === 1 || role === 2"
                         unstyled
                         as="a"
                         :href="route('angkatanPage')"
@@ -192,6 +194,7 @@ const logout = (event) => {
                         </template>
                     </Button>
                     <Button
+                        v-if="role === 1 || role === 3"
                         unstyled
                         as="a"
                         :href="route('kriteriaPage')"
@@ -208,6 +211,7 @@ const logout = (event) => {
                         </template>
                     </Button>
                     <Button
+                        v-if="role === 1 || role === 3"
                         unstyled
                         as="a"
                         :href="route('perhitunganPage')"
@@ -295,5 +299,24 @@ const logout = (event) => {
 
 .floating-animation {
     animation: floating 2s ease-in-out infinite; /* Adjust duration and easing as needed */
+}
+
+aside {
+    max-height: 100vh; /* Membatasi tinggi sidebar */
+    overflow-y: auto; /* Menambahkan scroll jika konten lebih panjang */
+    scrollbar-width: thin; /* Mengatur lebar scrollbar pada browser modern */
+}
+
+aside::-webkit-scrollbar {
+    width: 8px; /* Lebar scrollbar */
+}
+
+aside::-webkit-scrollbar-thumb {
+    background-color: #ccc; /* Warna thumb scrollbar */
+    border-radius: 4px; /* Membuat scrollbar lebih estetik */
+}
+
+aside::-webkit-scrollbar-thumb:hover {
+    background-color: #aaa; /* Warna thumb saat hover */
 }
 </style>

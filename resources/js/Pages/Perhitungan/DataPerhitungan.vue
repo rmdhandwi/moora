@@ -1,7 +1,15 @@
 <script setup>
 import TemplateLayout from "@/Layouts/TemplateLayout.vue";
-import { DataTable, Column, Card, Tag } from "primevue";
-import { defineProps, computed } from "vue";
+import {
+    DataTable,
+    Column,
+    Card,
+    TabView,
+    TabPanel,
+    Tag,
+    Button,
+} from "primevue";
+import { defineProps, ref } from "vue";
 
 const props = defineProps({
     auth: Object,
@@ -9,6 +17,37 @@ const props = defineProps({
     normalizationData: Array, // Data normalisasi dari backend
     optimizationData: Array, // Data optimasi bobot dan MOORA dari backend
 });
+
+const dtAman = ref(null);
+const dtHatiHati = ref(null);
+const dtDoPindah = ref(null);
+
+const activeGolongan = ref(0);
+
+// Filter data berdasarkan golongan
+const filteredData = (golongan) =>
+    props.optimizationData.filter((item) => item.golongan === golongan);
+
+// Fungsi untuk mengekspor DataTable ke CSV berdasarkan tab aktif
+const exportCSV = () => {
+    switch (activeGolongan.value) {
+        case 0: // Tab Aman
+            if (dtAman.value) {
+                dtAman.value.exportCSV();
+            }
+            break;
+        case 1: // Tab Hati-Hati
+            if (dtHatiHati.value) {
+                dtHatiHati.value.exportCSV();
+            }
+            break;
+        case 2: // Tab DO/Pindah
+            if (dtDoPindah.value) {
+                dtDoPindah.value.exportCSV();
+            }
+            break;
+    }
+};
 
 // Fungsi untuk memberi class CSS berdasarkan nilai golongan
 const getGolonganClass = (golongan) => {
@@ -28,13 +67,13 @@ const getGolonganClass = (golongan) => {
 const getGolonganIcon = (golongan) => {
     switch (golongan) {
         case "Aman":
-            return "pi pi-check-circle"; // Ikon centang hijau
+            return "pi pi-check-circle";
         case "Hati-Hati":
-            return "pi pi-exclamation-triangle"; // Ikon peringatan kuning
+            return "pi pi-exclamation-triangle";
         case "DO/Pindah":
-            return "pi pi-times-circle"; // Ikon silang merah
+            return "pi pi-times-circle";
         default:
-            return "pi pi-info-circle"; // Ikon informasi biru
+            return "pi pi-info-circle";
     }
 };
 // Ambil kriteria unik dari data normalisasi
@@ -52,51 +91,49 @@ const getGolonganIcon = (golongan) => {
                     <h3 class="text-xl font-semibold">
                         Data Hasil Perhitungan
                     </h3>
-                    <Button
-                        unstyled
-                        @click="exportCSV"
-                        class="px-4 py-2 bg-blue-500 hover:-translate-x-1 text-white rounded-md transition-all hover:bg-blue-600"
-                    >
-                        <template #default>
+                    <div class="flex justify-center items-center gap-2">
+                        <Button
+                            as="a"
+                            unstyled
+                            :href="route('perhitunganPage')"
+                            class="px-4 py-2 border text-red-500 border-red-500 hover:-translate-x-1 rounded-md transition-all hover:text-white hover:bg-red-600"
+                        >
+                            <div class="flex gap-2 items-center">
+                                <i class="pi pi-arrow-left"></i>
+                                <span>kembali</span>
+                            </div>
+                        </Button>
+                        <Button
+                            unstyled
+                            @click="exportCSV"
+                            class="px-4 py-2 bg-blue-500 hover:-translate-x-1 text-white rounded-md transition-all hover:bg-blue-600"
+                        >
                             <div class="flex gap-2 items-center">
                                 <i class="pi pi-external-link"></i>
                                 <span>Export</span>
                             </div>
-                        </template>
-                    </Button>
+                        </Button>
+                    </div>
                 </div>
-                <Card>
-                    <template #content>
+                <TabView v-model:activeIndex="activeGolongan">
+                    <!-- Tab Aman -->
+                    <TabPanel header="Golongan: Aman">
                         <DataTable
+                            ref="dtAman"
                             scrollable
                             responsiveLayout="scroll"
-                            resizableColumns
-                            columnResizeMode="fit"
-                            :value="optimizationData"
+                            :value="filteredData('Aman')"
                             :paginator="true"
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25, 50]"
                         >
-                            <!-- Kolom ID Mahasiswa -->
-                            <Column
-                                field="mahasiswa_id"
-                                header="ID Mahasiswa"
-                            />
-
-                            <!-- Kolom Nama Mahasiswa -->
                             <Column
                                 field="nama_mahasiswa"
                                 header="Nama Mahasiswa"
                             />
-
-                            <!-- Kolom NPM -->
-                            <Column field="npm" header="NPM" frozen />
-
-                            <!-- Kolom Nilai Akhir -->
+                            <Column field="npm" header="NPM" />
                             <Column field="moora" header="Nilai Akhir" />
-
-                            <!-- Kolom Golongan dengan warna dinamis -->
-                            <Column header="Golongan">
+                            <Column header="Golongan" field="golongan">
                                 <template #body="slotProps">
                                     <Tag
                                         :severity="
@@ -115,8 +152,84 @@ const getGolonganIcon = (golongan) => {
                                 </template>
                             </Column>
                         </DataTable>
-                    </template>
-                </Card>
+                    </TabPanel>
+
+                    <!-- Tab Hati-Hati -->
+                    <TabPanel header="Golongan: Hati-Hati">
+                        <DataTable
+                            ref="dtHatiHati"
+                            scrollable
+                            responsiveLayout="scroll"
+                            :value="filteredData('Hati-Hati')"
+                            :paginator="true"
+                            :rows="10"
+                            :rowsPerPageOptions="[5, 10, 25, 50]"
+                        >
+                            <Column
+                                field="nama_mahasiswa"
+                                header="Nama Mahasiswa"
+                            />
+                            <Column field="npm" header="NPM" />
+                            <Column field="moora" header="Nilai Akhir" />
+                            <Column header="Golongan" field="golongan">
+                                <template #body="slotProps">
+                                    <Tag
+                                        :severity="
+                                            getGolonganClass(
+                                                slotProps.data.golongan
+                                            )
+                                        "
+                                        :icon="
+                                            getGolonganIcon(
+                                                slotProps.data.golongan
+                                            )
+                                        "
+                                    >
+                                        {{ slotProps.data.golongan }}
+                                    </Tag>
+                                </template>
+                            </Column>
+                        </DataTable>
+                    </TabPanel>
+
+                    <!-- Tab DO/Pindah -->
+                    <TabPanel header="Golongan: DO/Pindah">
+                        <DataTable
+                            ref="dtDoPindah"
+                            scrollable
+                            responsiveLayout="scroll"
+                            :value="filteredData('DO/Pindah')"
+                            :paginator="true"
+                            :rows="10"
+                            :rowsPerPageOptions="[5, 10, 25, 50]"
+                        >
+                            <Column
+                                field="nama_mahasiswa"
+                                header="Nama Mahasiswa"
+                            />
+                            <Column field="npm" header="NPM" />
+                            <Column field="moora" header="Nilai Akhir" />
+                            <Column header="Golongan" field="golongan">
+                                <template #body="slotProps">
+                                    <Tag
+                                        :severity="
+                                            getGolonganClass(
+                                                slotProps.data.golongan
+                                            )
+                                        "
+                                        :icon="
+                                            getGolonganIcon(
+                                                slotProps.data.golongan
+                                            )
+                                        "
+                                    >
+                                        {{ slotProps.data.golongan }}
+                                    </Tag>
+                                </template>
+                            </Column>
+                        </DataTable>
+                    </TabPanel>
+                </TabView>
             </div>
         </template>
     </TemplateLayout>

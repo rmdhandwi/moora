@@ -15,6 +15,7 @@ const props = defineProps({
     user: Number,
     mahasiswa: Number,
     angkatanData: Array,
+    bydosen: Number,
 });
 
 const toast = useToast();
@@ -106,10 +107,29 @@ onMounted(() => {
             <div
                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
             >
+             <!-- Total User -->
+                <Button
+                    unstyled
+                    v-if="role === 1 || role === 2"
+                    :href="route('usersPage')"
+                    as="a"
+                    class="flex items-center justify-between p-4 no-border w-full rounded-md hover:-translate-y-1 transition-all shadow-lg hover:shadow-xl bg-white"
+                >
+                    <div class="text-left">
+                        <h2 class="text-lg font-semibold text-gray-600">
+                            Total User
+                        </h2>
+                        <p class="text-4xl font-bold text-orange-600">
+                            {{ props.user }}
+                        </p>
+                    </div>
+                    <i class="pi pi-user text-orange-500 text-5xl"></i>
+                </Button>
+
                 <!-- Total Dosen -->
                 <Button
                     unstyled
-                    v-if="role === 1"
+                    v-if="role === 1 || role === 2"
                     :href="route('dosenPage')"
                     as="a"
                     class="flex items-center justify-between p-4 no-border w-full rounded-md hover:-translate-y-1 transition-all shadow-lg hover:shadow-xl bg-white"
@@ -128,7 +148,7 @@ onMounted(() => {
                 <!-- Total Kriteria -->
                 <Button
                     unstyled
-                    v-if="role === 1"
+                    v-if="role === 1 || role === 3"
                     :href="route('kriteriaPage')"
                     as="a"
                     class="flex items-center justify-between p-4 no-border w-full rounded-md hover:-translate-y-1 transition-all shadow-lg hover:shadow-xl bg-white"
@@ -144,29 +164,10 @@ onMounted(() => {
                     <i class="pi pi-tags text-green-500 text-5xl"></i>
                 </Button>
 
-                <!-- Total User -->
-                <Button
-                    unstyled
-                    v-if="role === 1"
-                    :href="route('usersPage')"
-                    as="a"
-                    class="flex items-center justify-between p-4 no-border w-full rounded-md hover:-translate-y-1 transition-all shadow-lg hover:shadow-xl bg-white"
-                >
-                    <div class="text-left">
-                        <h2 class="text-lg font-semibold text-gray-600">
-                            Total User
-                        </h2>
-                        <p class="text-4xl font-bold text-orange-600">
-                            {{ props.user }}
-                        </p>
-                    </div>
-                    <i class="pi pi-user text-orange-500 text-5xl"></i>
-                </Button>
-
                 <!-- Total Angkatan -->
                 <Button
                     unstyled
-                    v-if="role === 1"
+                    v-if="role === 1 || role === 2"
                     :href="route('angkatanPage')"
                     as="a"
                     class="flex items-center justify-between p-4 no-border w-full rounded-md hover:-translate-y-1 transition-all shadow-lg hover:shadow-xl bg-white"
@@ -186,7 +187,6 @@ onMounted(() => {
                 <Button
                     as="a"
                     unstyled
-                    v-if="role === 1"
                     :href="route('mahasiswaPage')"
                     class="flex items-center justify-between p-4 no-border w-full rounded-md hover:-translate-y-1 transition-all shadow-lg hover:shadow-xl bg-white"
                 >
@@ -195,7 +195,12 @@ onMounted(() => {
                             Total Mahasiswa
                         </h2>
                         <p class="text-4xl font-bold text-purple-600">
-                            {{ props.mahasiswa }}
+                            <template v-if="role === 1 || role === 2">
+                                {{ props.mahasiswa }}
+                            </template>
+                            <template v-else="role === 3">
+                                {{ props.bydosen }}
+                            </template>
                         </p>
                     </div>
                     <i
@@ -205,7 +210,7 @@ onMounted(() => {
             </div>
 
             <!-- Chart -->
-            <Card class="p-6">
+            <Card class="p-6" v-if="role === 1 || role === 2">
                 <template #content>
                     <h2 class="text-xl font-semibold mb-4">
                         Jumlah Mahasiswa Berdasarkan Angkatan

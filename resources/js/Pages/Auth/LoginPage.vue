@@ -77,15 +77,17 @@ const LoginSubmit = () => {
                 class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-800 opacity-70"
             ></div>
         </div>
-        <div class="flex mb-4 z-10 items-center">
+        <div class="flex flex-col mb-4 z-10 items-center">
             <div class="logo">
                 <img
-                    src="image/logo/android-chrome-512x512.png"
+                    src="image/logo/logo.png"
                     alt="logo.png"
-                    class="h-[100px] w-[100px]"
+                    class="h-[10rem]"
                 />
             </div>
-            <div class="judul ms-3 font-bold text-2xl text-white">
+            <div
+                class="judul ms-3 mt-2 font-bold text-2xl text-white"
+            >
                 <h1>SPK | MASMA</h1>
             </div>
         </div>

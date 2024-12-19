@@ -39,6 +39,8 @@ return new class extends Migration
         // Angkatan
         Schema::create('tbl_angkatan', function (Blueprint $table) {
             $table->string('angkatan_id', 4)->primary();
+            $table->string('dosen_id', 4);
+            $table->foreign('dosen_id')->references('dosen_id')->on('tbl_dosen')->onDelete('cascade');
             $table->year('tahun_angkatan');
             $table->string('jurusan', 20);
         });
@@ -68,15 +70,6 @@ return new class extends Migration
             $table->float('bobot');
             $table->string('type', 8);
         });
-
-        // Hasil
-        Schema::create('tbl_hasil', function (Blueprint $table) {
-            $table->string('hasil_id')->primary();
-            $table->float('nilai_akhir');
-            $table->integer('peringkat');
-            $table->string('mahasiswa_id', 8);
-            $table->foreign('mahasiswa_id')->references('mahasiswa_id')->on('tbl_mahasiswa')->onDelete('cascade');
-        });
     }
 
     /**
@@ -84,7 +77,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tbl_hasil');
         Schema::dropIfExists('tbl_kriteria');;
         Schema::dropIfExists('tbl_mahasiswa');
         Schema::dropIfExists('tbl_angkatan');

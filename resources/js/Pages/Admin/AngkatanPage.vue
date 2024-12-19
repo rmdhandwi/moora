@@ -28,6 +28,7 @@ const props = defineProps({
     title: String,
     auth: Object,
     angkatan: Object,
+    dosen: Object,
 });
 
 // ceknotif
@@ -88,6 +89,7 @@ const dataDialog = ref(null);
 
 const formAngkatan = useForm({
     angkatan_id: "",
+    dosen_id: "",
     tahun_angkatan: "",
     jurusan: "Teknik Informatika",
 });
@@ -139,6 +141,7 @@ const confirmEdit = (data) => {
             formAngkatan.clearErrors();
             dataDialog.value = "edit";
             formAngkatan.angkatan_id = data.angkatan_id;
+            formAngkatan.dosen_id = data.dosen_id;
             formAngkatan.jurusan = data.jurusan;
             formAngkatan.tahun_angkatan = data.tahun_angkatan;
             showDialog.value = true;
@@ -263,18 +266,17 @@ const confirmDelete = (data) => {
                     <div class="space-y-6">
                         <div class="mt-2">
                             <FloatLabel variant="on">
-                                <Select
-                                    v-model="formAngkatan.tahun_angkatan"
-                                    inputId="user"
-                                    :options="years"
-                                    optionLabel="tahun"
-                                    optionValue="tahun"
+                                <InputText
+                                    id="tahun_angkatan"
                                     fluid
+                                    v-model="formAngkatan.tahun_angkatan"
                                     :invalid="
                                         !!formAngkatan.errors.tahun_angkatan
                                     "
                                 />
-                                <label for="user">Tahun Pengguna</label>
+                                <label for="tahun_angkatan"
+                                    >Tahun Angkatan</label
+                                >
                             </FloatLabel>
                             <Message
                                 v-if="formAngkatan.errors.tahun_angkatan"
@@ -284,6 +286,28 @@ const confirmDelete = (data) => {
                                 >{{
                                     formAngkatan.errors.tahun_angkatan
                                 }}</Message
+                            >
+                        </div>
+
+                        <div class="mt-2">
+                            <FloatLabel variant="on">
+                                <Select
+                                    v-model="formAngkatan.dosen_id"
+                                    inputId="dosen"
+                                    :options="props.dosen"
+                                    optionLabel="nama_dosen"
+                                    optionValue="dosen_id"
+                                    fluid
+                                    :invalid="!!formAngkatan.errors.dosen_id"
+                                />
+                                <label for="dosen">Tahun Pengguna</label>
+                            </FloatLabel>
+                            <Message
+                                v-if="formAngkatan.errors.dosen_id"
+                                severity="error"
+                                size="small"
+                                variant="simple"
+                                >{{ formAngkatan.errors.dosen_id }}</Message
                             >
                         </div>
 
@@ -389,6 +413,7 @@ const confirmDelete = (data) => {
                             field="tahun_angkatan"
                             header="Tahun Angkatan"
                         />
+                        <Column field="dosen.nama_dosen" header="Dosen Pembimbing" />
                         <Column field="jurusan" header="Jurusan" />
 
                         <Column header="Opsi" frozen alignFrozen="right">

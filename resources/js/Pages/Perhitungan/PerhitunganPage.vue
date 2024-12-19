@@ -38,7 +38,6 @@ onMounted(() => {
     dataMahasiswa.value = [...originalDataMahasiswa.value]; // Set initial data
 });
 
-const dt = ref([]);
 const originalDataMahasiswa = ref([]); // Store original data
 const dataMahasiswa = ref([]);
 
@@ -76,7 +75,7 @@ watch(
             const filteredData = originalDataMahasiswa.value.filter(
                 (mahasiswa) => mahasiswa.angkatan_id === newValue
             );
-            
+
             // Tambahkan index ulang dari 1
             dataMahasiswa.value = filteredData.map((mahasiswa, index) => ({
                 ...mahasiswa,
@@ -95,38 +94,54 @@ watch(
 );
 
 const hitung = () => {
-    // Check if there are any students for the selected angkatan_id
-    const filteredData = dataMahasiswa.value.filter(
-        (mahasiswa) => mahasiswa.angkatan_id === formPerhitungan.angkatan_id
-    );
+    // Check role of the authenticated user
+    if (props.auth.user.role === 1) {
+        // Filter mahasiswa data based on angkatan_id
+        const filteredData = dataMahasiswa.value.filter(
+            (mahasiswa) => mahasiswa.angkatan_id === formPerhitungan.angkatan_id
+        );
 
-    if (filteredData.length === 0) {
-        // Show error toast if no data is found
-        toast.add({
-            severity: "error",
-            summary: "Kesalahan",
-            detail: "Tidak ada data mahasiswa untuk tahun angkatan yang dipilih.",
-            life: 3000,
-            group: "tc",
-        });
-        return; // Exit the function early
-    }
-
-    formPerhitungan.put(
-        route("create.perhitungan", formPerhitungan.angkatan_id),
-        {
-            onSuccess: () => ShowToast(),
-            onError: () => {
-                toast.add({
-                    severity: "error",
-                    summary: "Kesalahan",
-                    detail: "Terjadi kesalah",
-                    life: 3000,
-                    group: "tc",
-                });
-            },
+        // Show error toast if no data found
+        if (filteredData.length === 0) {
+            toast.add({
+                severity: "error",
+                summary: "Kesalahan",
+                detail: "Tidak ada data mahasiswa untuk tahun angkatan yang dipilih.",
+                life: 3000,
+                group: "tc",
+            });
+            return;
         }
-    );
+
+        // Submit data for role 1
+        formPerhitungan.put(
+            route("put.perhitungan", formPerhitungan.angkatan_id),
+            {
+                onSuccess: ShowToast,
+                onError: handleErrorToast,
+            }
+        );
+    } else {
+        // Submit data for other roles
+        formPerhitungan.put(
+            route("create.perhitungan", props.auth.user.user_id),
+            {
+                onSuccess: ShowToast,
+                onError: handleErrorToast,
+            }
+        );
+    }
+};
+
+// Helper function to handle error toast
+const handleErrorToast = () => {
+    toast.add({
+        severity: "error",
+        summary: "Kesalahan",
+        detail: "Terjadi kesalahan. Silakan coba lagi.",
+        life: 3000,
+        group: "tc",
+    });
 };
 </script>
 
@@ -172,7 +187,7 @@ const hitung = () => {
                                 <div
                                     class="grid md:grid-cols-2 sm:grid-cols-1 gap-4 w-full md:w-[50%]"
                                 >
-                                    <div>
+                                    <div v-if="props.auth.user.role === 1">
                                         <FloatLabel variant="on">
                                             <Select
                                                 v-model="
@@ -242,7 +257,6 @@ const hitung = () => {
                         </template>
 
                         <Column field="index" header="No" />
-                        <Column field="mahasiswa_id" header="Kode Mahasiswa" />
                         <Column frozen field="npm" header="NPM" />
                         <Column
                             field="angkatan.tahun_angkatan"
@@ -253,10 +267,11 @@ const hitung = () => {
                             header="Dosen Pembimbing"
                         />
                         <Column
+                            frozen
                             field="nama_mahasiswa"
                             header="Nama Mahasiswa"
                         />
-                        <Column field="total_sks" header="Total SKS" />
+                        <Column field="sks_total" header="Total SKS" />
                         <Column field="sks_tempuh" header="SKS Tempuh" />
                         <Column field="sks_sisa" header="SKS Sisa" />
                         <Column field="studi_total" header="Total Studi" />
