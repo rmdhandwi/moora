@@ -77,7 +77,7 @@ const LoginSubmit = () => {
                 class="absolute inset-0 bg-gradient-to-b from-transparent to-gray-800 opacity-70"
             ></div>
         </div>
-        <div class="flex flex-col mb-4 z-10 items-center">
+        <div class="flex flex-col mb-4 z-10 items-center relative">
             <div class="logo">
                 <img
                     src="image/logo/logo.png"
@@ -86,9 +86,18 @@ const LoginSubmit = () => {
                 />
             </div>
             <div
-                class="judul ms-3 mt-2 font-bold text-2xl text-white"
+                class="judul mt-2 font-bold text-2xl text-white animate-textFade text-center drop-shadow-md"
             >
-                <h1>SPK | MASMA</h1>
+                <h1
+                    class="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 drop-shadow-md"
+                >
+                    Sistem Pendukung Keputusan
+                </h1>
+                <p
+                    class="text-white text-sm mt-2 animate-textSlide drop-shadow-md"
+                >
+                    Mempermudah Pengambilan Keputusan dengan SPK MASMA
+                </p>
             </div>
         </div>
         <Card
@@ -156,17 +165,42 @@ body {
     font-family: "Arial", sans-serif;
 }
 
-h1 {
-    color: #ffffff; /* Warna teks judul */
+@keyframes textFade {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-input:focus,
-.p-inputtext:focus {
-    border-color: #3b82f6; /* Warna border saat fokus */
-    box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.5); /* Bayangan saat fokus */
+@keyframes textSlide {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
 }
 
-button {
-    transition: background-color 0.3s ease; /* Transisi untuk tombol */
+.animate-textFade {
+    animation: textFade 1s ease-out;
+}
+
+.animate-textSlide {
+    animation: textSlide 1s ease-out 0.5s;
+}
+
+h1,
+p {
+    text-shadow: 2px 2px 4px; /* Tambahkan efek bayangan pada teks */
+}
+
+.bg-black {
+    border-radius: 8px;
 }
 </style>

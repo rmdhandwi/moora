@@ -42,7 +42,6 @@ class Perhitungan extends Controller
         }
 
         $Angkatan = AngkatanModel::all();
-        $mahasiswa = MahasiswaModel::with('dosen', 'angkatan')->get();
 
         return Inertia::render('Perhitungan/PerhitunganPage', [
             'title' => $title,

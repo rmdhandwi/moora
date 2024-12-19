@@ -103,8 +103,8 @@ const addDialog = () => {
 
 const creteAngkatan = () => {
     formAngkatan.post(route("create.angkatan"), {
-        onSuccess: () => {
-            refresh();
+        onSuccess: async () => {
+            await refresh();
             ShowToast();
             showDialog.value = false;
         },
@@ -159,16 +159,20 @@ const confirmEdit = (data) => {
 };
 
 const refresh = () => {
-    router.visit(route("angkatanPage"));
+    return new Promise((resolve) => {
+        router.visit(route("angkatanPage"), {
+            onSuccess: () => {
+                resolve();
+            },
+        });
+    });
 };
 
 const updateAngkatan = () => {
     formAngkatan.put(route("update.angkatan", formAngkatan.angkatan_id), {
-        onSuccess: () => {
-            refresh();
-            setTimeout(() => {
-                ShowToast();
-            }, 500);
+        onSuccess: async () => {
+            await refresh();
+            ShowToast();
             showDialog.value = false;
         },
         onError: () => {
@@ -201,11 +205,9 @@ const confirmDelete = (data) => {
         },
         accept: () => {
             router.delete(route("destroy.angkatan", data.angkatan_id), {
-                onSuccess: () => {
-                    refresh();
-                    setTimeout(() => {
-                        ShowToast();
-                    }, 500);
+                onSuccess: async () => {
+                    await refresh();
+                    ShowToast();
                 },
             });
         },
@@ -413,7 +415,10 @@ const confirmDelete = (data) => {
                             field="tahun_angkatan"
                             header="Tahun Angkatan"
                         />
-                        <Column field="dosen.nama_dosen" header="Dosen Pembimbing" />
+                        <Column
+                            field="dosen.nama_dosen"
+                            header="Dosen Pembimbing"
+                        />
                         <Column field="jurusan" header="Jurusan" />
 
                         <Column header="Opsi" frozen alignFrozen="right">
