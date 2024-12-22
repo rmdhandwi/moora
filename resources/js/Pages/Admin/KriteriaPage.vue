@@ -405,7 +405,6 @@ const confirmDelete = (data) => {
                         </template>
 
                         <Column field="index" header="No" />
-                        <Column field="kriteria_id" header="Kode Kriteria" />
                         <Column field="nama_kriteria" header="Nama Kriteria" />
                         <Column field="bobot" header="Bobot (%)" />
                         <Column field="type" header="Type" />

@@ -118,7 +118,7 @@ const creteDosen = () => {
 const confirm = useConfirm();
 const confirmEdit = (data) => {
     confirm.require({
-        message: `Anda ingin mengedit user : ${data.nama_dosen}`,
+        message: `Anda ingin mengedit dosen : ${data.nama_dosen}`,
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             icon: "pi pi-times",
@@ -173,7 +173,7 @@ const updateDosen = () => {
 
 const confirmDelete = (data) => {
     confirm.require({
-        message: `Anda ingin menghapus user : ${data.nama_dosen}`,
+        message: `Anda ingin menghapus dosen : ${data.nama_dosen}`,
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             icon: "pi pi-times",

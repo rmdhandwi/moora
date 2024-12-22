@@ -46,7 +46,6 @@ const formLogin = useForm({
     password: "",
 });
 
-// Fungsi untuk menangani pengiriman form login
 const LoginSubmit = () => {
     formLogin.post(route("LoginSubmit"), {
         onSuccess: () => {
@@ -55,6 +54,10 @@ const LoginSubmit = () => {
             } else {
                 formLogin.reset();
                 ShowToast();
+                setTimeout(() => {
+                    props.flash.notif = null; 
+                    props.flash.message = null; 
+                }, 3000); 
             }
         },
     });

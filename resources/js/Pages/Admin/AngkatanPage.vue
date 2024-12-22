@@ -124,7 +124,7 @@ const creteAngkatan = () => {
 const confirm = useConfirm();
 const confirmEdit = (data) => {
     confirm.require({
-        message: `Anda ingin mengedit Angkatan : ${data.tahun_angkatan}?`,
+        message: `Anda ingin mengedit angkatan : ${data.tahun_angkatan}?`,
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             icon: "pi pi-times",
@@ -190,7 +190,7 @@ const updateAngkatan = () => {
 
 const confirmDelete = (data) => {
     confirm.require({
-        message: `Anda ingin menghapus user : ${data.tahun_angkatan}`,
+        message: `Anda ingin menghapus angakatan : ${data.tahun_angkatan}`,
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             icon: "pi pi-times",
@@ -302,7 +302,7 @@ const confirmDelete = (data) => {
                                     fluid
                                     :invalid="!!formAngkatan.errors.dosen_id"
                                 />
-                                <label for="dosen">Tahun Pengguna</label>
+                                <label for="dosen">Dosen Pembimbing</label>
                             </FloatLabel>
                             <Message
                                 v-if="formAngkatan.errors.dosen_id"
@@ -410,7 +410,6 @@ const confirmDelete = (data) => {
                         </template>
 
                         <Column field="index" header="No" />
-                        <Column field="angkatan_id" header="Kode Angkatan" />
                         <Column
                             field="tahun_angkatan"
                             header="Tahun Angkatan"

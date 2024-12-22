@@ -53,6 +53,8 @@ Route::middleware('auth')->group(function () {
     Route::put('Mahasiswa/{id}/update', [Mahasiswa::class, 'update'])->name('update.mahasiswa');
     Route::delete('Mahasiswa/{id}/delete', [Mahasiswa::class, 'destroy'])->name('destroy.mahasiswa');
 
+    Route::post('Import', [Mahasiswa::class, 'uploadCSV'])->name('uploadCSV');
+
     Route::get('Perhitungan', [Perhitungan::class, 'perhitunganPage'])->name('perhitunganPage');
     Route::put('Perhitungan/{id}/moora/admin', [Perhitungan::class, 'store'])->name('put.perhitungan');
     Route::put('Perhitungan/{id}/moora/dosen', [Perhitungan::class, 'create'])->name('create.perhitungan');

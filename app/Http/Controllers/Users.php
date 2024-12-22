@@ -14,8 +14,7 @@ class Users extends Controller
     public function usersPage()
     {
         $title = 'Users';
-        $users = User::all();
-
+        $users = User::orderBy('role')->get();
         return Inertia::render('Admin/UserPage', [
             'title' => $title,
             'users' => $users

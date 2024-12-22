@@ -297,4 +297,116 @@ class Mahasiswa extends Controller
             'message'      => 'Berhasil menghapus mahasiswa.',
         ]);
     }
+
+    public function uploadCSV(Request $request)
+    {
+        // Validasi file yang diunggah
+        $request->validate([
+            'file' => 'required|mimes:csv,txt'
+        ], [
+            'file.required' => 'File harus diunggah.',
+            'file.mimes' => 'Hanya file CSV yang diperbolehkan.'
+        ]);
+
+        try {
+            $file = $request->file('file');
+            $csvData = array_map('str_getcsv', file($file));
+
+            // Lewati baris pertama jika itu adalah header
+            $header = array_shift($csvData);
+
+            // Ambil kode terakhir dari tabel, atau mulai dari 'MHS0001'
+            $lastMahasiswa = MahasiswaModel::orderBy('mahasiswa_id', 'desc')->first();
+            $lastNumber = $lastMahasiswa ? intval(substr($lastMahasiswa->mahasiswa_id, 3)) : 0;
+
+
+            // Array untuk menyimpan npm yang sudah diproses
+            $processedNPM = [];
+
+            foreach ($csvData as $row) {
+                $npm = $row[0]; // Pastikan NPM ada di kolom pertama
+                $tahunId = $row[8]; // Tahun dari CSV (row[8])
+
+                $lastNumber++; // Increment kode mahasiswa berdasarkan jumlah data di CSV
+                $newMahasiswaId = 'MHS' . str_pad($lastNumber, 4, '0', STR_PAD_LEFT);
+
+                // Validasi apakah nilai pada row[2] hingga row[7] adalah integer
+                for ($i = 2; $i <= 7; $i++) {
+                    if (!ctype_digit($row[$i])) { // ctype_digit memastikan bahwa nilai adalah string numerik tanpa tanda negatif
+                        return redirect()->back()->with([
+                            'notif_status' => 'error',
+                            'message' => "Kolom pada baris dengan NPM $npm dan data ke $i harus berupa angka!"
+                        ]);
+                    }
+                }
+
+                // Cek apakah npm sudah ada dalam array (untuk cek duplikasi dalam file)
+                if (in_array($npm, $processedNPM)) {
+                    return redirect()->back()->with([
+                        'notif_status' => 'error',
+                        'message' => "NPM $npm duplikat dalam file CSV!"
+                    ]);
+                }
+
+                // Cek apakah npm sudah ada di database
+                $existingData = MahasiswaModel::where('npm', $npm)->first();
+                if ($existingData) {
+                    return redirect()->back()->with([
+                        'notif_status' => 'error',
+                        'message' => "NPM $npm sudah terdaftar! dengan Nama: {$existingData->nama_mahasiswa}"
+                    ]);
+                }
+
+                // Cek apakah tahun_angkatan ada di tabel angkatan
+                $angkatan = AngkatanModel::where('tahun_angkatan', $tahunId)->first();
+                if (!$angkatan) {
+                    return redirect()->back()->with([
+                        'notif_status' => 'error',
+                        'message' => "Angkatan $tahunId tidak ditemukan di tabel angkatan!"
+                    ]);
+                }
+
+                // Cek apakah dosen ada di tabel dosen
+                $dosen = DosenModel::where('dosen_id', $angkatan->dosen_id)->first();
+                if (!$dosen) {
+                    return redirect()->back()->with([
+                        'notif_status' => 'error',
+                        'message' => "Dosen dengan kode $angkatan->dosen_id tidak ditemukan di tabel dosen!"
+                    ]);
+                }
+
+                // Gunakan id  yang ditemukan
+                $angkatanId = $angkatan->angkatan_id;
+                $dosenId = $angkatan->dosen_id;
+
+                // Pemetaan kolom CSV ke kolom database
+                MahasiswaModel::create([
+                    'mahasiswa_id' => $newMahasiswaId,
+                    'npm' => $npm,
+                    'nama_mahasiswa' => $row[1],
+                    'sks_total' => $row[2],
+                    'sks_tempuh' => $row[3],
+                    'sks_sisa' => $row[4],
+                    'studi_total' => $row[5],
+                    'studi_sisa' => $row[6],
+                    'studi_tempuh' => $row[7],
+                    'dosen_id' => $dosenId,
+                    'angkatan_id' => $angkatanId,
+                ]);
+
+                // Tambahkan npm yang telah diproses ke dalam array
+                $processedNPM[] = $npm;
+            }
+
+            return redirect()->back()->with([
+                'notif_status' => 'success',
+                'message' => 'File CSV berhasil diunggah dan data berhasil disimpan!'
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with([
+                'notif_status' => 'error',
+                'message' => 'Terjadi kesalahan saat memproses file: ' . $e->getMessage()
+            ]);
+        }
+    }
 }

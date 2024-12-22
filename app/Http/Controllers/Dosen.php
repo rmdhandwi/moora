@@ -13,7 +13,7 @@ class Dosen extends Controller
     {
         $title = 'Dosen';
         $dosen = DosenModel::with('users')->get();
-        $users = User::all();
+        $users = User::where('role', 3)->get();
 
         return Inertia::render('Dosen/DosenPage', [
             'title' => $title,

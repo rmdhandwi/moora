@@ -18,6 +18,7 @@ import {
     Select,
     ConfirmPopup,
     Tag,
+    FileUpload,
     useConfirm,
 } from "primevue";
 import TemplateLayout from "@/Layouts/TemplateLayout.vue";
@@ -189,10 +190,11 @@ const creteMahasiswa = () => {
     });
 };
 
+const header = ref("");
 const confirm = useConfirm();
 const confirmEdit = (data) => {
     confirm.require({
-        message: `Anda ingin mengedit user : ${data.nama_dosen}`,
+        message: `Anda ingin mengedit mahasiswa : ${data.nama_mahasiswa}`,
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             icon: "pi pi-times",
@@ -210,6 +212,7 @@ const confirmEdit = (data) => {
             dataDialog.value = "edit";
             formMahasiswa.mahasiswa_id = data.mahasiswa_id;
             formMahasiswa.nama_mahasiswa = data.nama_mahasiswa;
+            header.value = data.nama_mahasiswa;
             formMahasiswa.dosen_id = data.dosen_id;
             formMahasiswa.angkatan_id = data.angkatan_id;
             formMahasiswa.npm = data.npm;
@@ -223,9 +226,9 @@ const confirmEdit = (data) => {
         },
         reject: () => {
             toast.add({
-                severity: "error",
-                summary: "Batal",
-                detail: "Batal untuk edit data",
+                severity: "info",
+                summary: "Dibatalkan",
+                detail: "Pembaharuan data dibatalkan",
                 life: 3000,
                 group: "tc",
             });
@@ -255,7 +258,7 @@ const updateMahasiswa = () => {
 
 const confirmDelete = (data) => {
     confirm.require({
-        message: `Anda ingin menghapus user : ${data.nama_mahasiswa}`,
+        message: `Anda ingin menghapus mahasiswa : ${data.nama_mahasiswa}`,
         icon: "pi pi-exclamation-triangle",
         rejectProps: {
             icon: "pi pi-times",
@@ -289,14 +292,61 @@ const confirmDelete = (data) => {
         },
         reject: () => {
             toast.add({
-                severity: "error",
-                summary: "Batal",
-                detail: "Batal untuk edit data",
+                severity: "info",
+                summary: "Dibatalkan",
+                detail: "Penghapusan data dibatalkan",
                 life: 3000,
                 group: "tc",
             });
         },
     });
+};
+
+const visibleImport = ref(false);
+const src = ref(null);
+const errorMessage = ref("");
+
+const formCSV = useForm({
+    file: null,
+});
+
+const importCSV = () => {
+    src.value = null;
+    errorMessage.value = "";
+    visibleImport.value = true;
+    formCSV.file = null;
+};
+
+const uploadCSV = () => {
+    formCSV.post(route("uploadCSV"), {
+        onSuccess: async () => {
+            await refresh();
+            ShowToast();
+        },
+        onError: (errors) => {
+            // Handle error display
+            console.error(errors);
+        },
+    });
+};
+
+const onFileSelect = (event) => {
+    formCSV.file = event.files[0];
+
+    if (!formCSV.file || !formCSV.file.name.endsWith(".csv")) {
+        formCSV.errors.file = null;
+        errorMessage.value = "Hanya file dengan ekstensi .csv yang diizinkan.";
+        return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = async (e) => {
+        src.value = e.target.result;
+        errorMessage.value = ""; // Hapus pesan kesalahan jika file valid
+    };
+
+    reader.readAsDataURL(formCSV.file);
 };
 </script>
 
@@ -308,22 +358,96 @@ const confirmDelete = (data) => {
         <template #content>
             <div class="flex items-center justify-between mb-4">
                 <span class="text-2xl font-bold">Data {{ props.title }}</span>
-                <Button
+                <div
+                    class="flex items-center gap-2"
                     v-if="
                         props.auth.user.role === 1 || props.auth.user.role === 2
                     "
-                    @click="addDialog"
-                    unstyled
-                    class="px-4 py-2 bg-blue-500 hover:-translate-x-1 text-white rounded-md transition-all hover:bg-blue-600"
                 >
-                    <template #default>
-                        <div class="flex gap-2 items-center">
-                            <i class="pi pi-plus-circle"></i>
-                            <span>Tambah data</span>
-                        </div>
-                    </template>
-                </Button>
+                    <Button
+                        @click="importCSV"
+                        unstyled
+                        class="px-4 py-2 bg-green-500 hover:-translate-x-1 text-white rounded-md transition-all hover:bg-green-600"
+                    >
+                        <template #default>
+                            <div class="flex gap-2 items-center">
+                                <i class="pi pi-file-excel"></i>
+                                <span>import CSV</span>
+                            </div>
+                        </template>
+                    </Button>
+                    <Button
+                        @click="addDialog"
+                        unstyled
+                        class="px-4 py-2 bg-blue-500 hover:-translate-x-1 text-white rounded-md transition-all hover:bg-blue-600"
+                    >
+                        <template #default>
+                            <div class="flex gap-2 items-center">
+                                <i class="pi pi-plus-circle"></i>
+                                <span>Tambah data</span>
+                            </div>
+                        </template>
+                    </Button>
+                </div>
             </div>
+
+            <!-- Form Import Fiile -->
+            <Dialog
+                v-model:visible="visibleImport"
+                modal
+                header="Import file CSV"
+                :style="{ width: '25vw' }"
+                :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
+            >
+                <form @submit.prevent="uploadCSV">
+                    <div class="card flex flex-col items-center gap-6">
+                        <FileUpload
+                            mode="basic"
+                            @select="onFileSelect"
+                            customUpload
+                            auto
+                            size="small"
+                            severity="secondary"
+                            class="p-button-outlined"
+                        />
+                        <p v-if="errorMessage" class="text-red-500 text-sm">
+                            {{ errorMessage }}
+                        </p>
+                        <Message
+                            v-if="formCSV.errors.file"
+                            severity="error"
+                            size="small"
+                            variant="simple"
+                        >
+                            {{ formCSV.errors.file }}
+                        </Message>
+                        <div
+                            v-if="src"
+                            class="w-full sm:w-64 flex flex-col items-center"
+                        >
+                            <p class="text-sm text-gray-500">
+                                File CSV telah dipilih:
+                            </p>
+                            <img
+                                src="image/csv.png"
+                                alt="CSV Icon"
+                                class="w-16 h-16"
+                            />
+                            <p class="text-sm text-gray-500 mt-2">
+                                File CSV berhasil dimuat.
+                            </p>
+                        </div>
+                        <Button
+                            type="submit"
+                            label="Upload"
+                            size="small"
+                            :disabled="formCSV.file === null ? true : false"
+                            icon="pi pi-upload"
+                            variant="outlined"
+                        />
+                    </div>
+                </form>
+            </Dialog>
 
             <!-- FormDialog -->
             <Dialog
@@ -332,7 +456,7 @@ const confirmDelete = (data) => {
                 :header="
                     dataDialog === 'add'
                         ? 'Tambah Data Mahasiswa'
-                        : 'Edit Data Mahasiswa'
+                        : `Edit Data ${header}`
                 "
                 :style="{ width: '50vw' }"
                 :breakpoints="{ '1199px': '75vw', '575px': '90vw' }"
