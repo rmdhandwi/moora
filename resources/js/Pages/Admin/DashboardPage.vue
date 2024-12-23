@@ -107,7 +107,7 @@ onMounted(() => {
             <div
                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6"
             >
-             <!-- Total User -->
+                <!-- Total User -->
                 <Button
                     unstyled
                     v-if="role === 1 || role === 2"
@@ -221,6 +221,7 @@ onMounted(() => {
                             type="bar"
                             :data="chartData"
                             :options="chartOptions"
+                            height="350"
                         />
                     </div>
                 </template>

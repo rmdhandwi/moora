@@ -8,8 +8,12 @@ import {
     TabPanel,
     Tag,
     Button,
+    InputIcon,
+    InputText,
+    IconField,
 } from "primevue";
-import { defineProps, ref } from "vue";
+import { defineProps, ref, computed, reactive } from "vue";
+import { FilterMatchMode } from "@primevue/core/api";
 
 const props = defineProps({
     auth: Object,
@@ -18,15 +22,29 @@ const props = defineProps({
     optimizationData: Array, // Data optimasi bobot dan MOORA dari backend
 });
 
+const filters = reactive({
+    global: { value: null, matchMode: FilterMatchMode.CONTAINS },
+});
+
 const dtAman = ref(null);
 const dtHatiHati = ref(null);
 const dtDoPindah = ref(null);
+
+// Fungsi reset filter
+const resetFilters = () => {
+    filters.global.value = null;
+};
 
 const activeGolongan = ref(0);
 
 // Filter data berdasarkan golongan
 const filteredData = (golongan) =>
-    props.optimizationData.filter((item) => item.golongan === golongan);
+    props.optimizationData
+        .filter((item) => item.golongan === golongan)
+        .map((item, index) => ({
+            ...item,
+            index: index + 1, // Tambahkan indeks
+        }));
 
 // Fungsi untuk mengekspor DataTable ke CSV berdasarkan tab aktif
 const exportCSV = () => {
@@ -76,7 +94,8 @@ const getGolonganIcon = (golongan) => {
             return "pi pi-info-circle";
     }
 };
-// Ambil kriteria unik dari data normalisasi
+
+// // Ambil kriteria unik dari data normalisasi
 // const uniqueCriteria = computed(() => {
 //     if (!props.normalizationData.length) return [];
 //     return Object.keys(props.normalizationData[0].nilai_normalisasi); // Mengambil kriteria dari data pertama
@@ -93,17 +112,6 @@ const getGolonganIcon = (golongan) => {
                     </h3>
                     <div class="flex justify-center items-center gap-2">
                         <Button
-                            as="a"
-                            unstyled
-                            :href="route('perhitunganPage')"
-                            class="px-4 py-2 border text-red-500 border-red-500 hover:-translate-x-1 rounded-md transition-all hover:text-white hover:bg-red-600"
-                        >
-                            <div class="flex gap-2 items-center">
-                                <i class="pi pi-arrow-left"></i>
-                                <span>kembali</span>
-                            </div>
-                        </Button>
-                        <Button
                             unstyled
                             @click="exportCSV"
                             class="px-4 py-2 bg-blue-500 hover:-translate-x-1 text-white rounded-md transition-all hover:bg-blue-600"
@@ -115,6 +123,38 @@ const getGolonganIcon = (golongan) => {
                         </Button>
                     </div>
                 </div>
+
+                <!-- Global Search -->
+                <div class="mb-4 flex justify-between items-center">
+                    <div class="flex justify-between items-center">
+                        <IconField>
+                            <InputIcon>
+                                <i class="pi pi-search me-4" />
+                            </InputIcon>
+                            <InputText
+                                v-model="filters.global.value"
+                                placeholder="Cari Data Mahasiswa"
+                                class="w-full md:w-auto"
+                            />
+                        </IconField>
+                        <Button
+                            label="Reset"
+                            icon="pi pi-refresh"
+                            class="p-button-text p-button-sm ml-2"
+                            severity="danger"
+                            @click="resetFilters"
+                        />
+                    </div>
+                    <Button
+                        label="kembali"
+                        icon="pi pi-arrow-left"
+                        class="p-button-text p-button-sm ml-2"
+                        severity="danger"
+                        as="a"
+                        :href="route('perhitunganPage')"
+                    />
+                </div>
+
                 <TabView v-model:activeIndex="activeGolongan">
                     <!-- Tab Aman -->
                     <TabPanel header="Golongan: Aman">
@@ -123,10 +163,12 @@ const getGolonganIcon = (golongan) => {
                             scrollable
                             responsiveLayout="scroll"
                             :value="filteredData('Aman')"
+                            :filters="filters"
                             :paginator="true"
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25, 50]"
                         >
+                            <Column field="index" header="No" />
                             <Column
                                 field="nama_mahasiswa"
                                 header="Nama Mahasiswa"
@@ -161,10 +203,12 @@ const getGolonganIcon = (golongan) => {
                             scrollable
                             responsiveLayout="scroll"
                             :value="filteredData('Hati-Hati')"
+                            :filters="filters"
                             :paginator="true"
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25, 50]"
                         >
+                            <Column field="index" header="No" />
                             <Column
                                 field="nama_mahasiswa"
                                 header="Nama Mahasiswa"
@@ -199,10 +243,12 @@ const getGolonganIcon = (golongan) => {
                             scrollable
                             responsiveLayout="scroll"
                             :value="filteredData('DO/Pindah')"
+                            :filters="filters"
                             :paginator="true"
                             :rows="10"
-                            :rowsPerPageOptions="[5, 10, 25, 50]"
+                            :rowsPerPageOptions="[5, 10, 25, 50, 100]"
                         >
+                            <Column field="index" header="No" />
                             <Column
                                 field="nama_mahasiswa"
                                 header="Nama Mahasiswa"
@@ -253,8 +299,7 @@ const getGolonganIcon = (golongan) => {
 }
 </style>
 
-<!-- data jika diperlukan -->
-<!-- <h3 class="text-xl font-semibold mb-2">Data Normalisasi</h3>
+<!-- <h3 class="text-xl font-semibold mb-4">Data Normalisasi</h3>
                 <Card>
                     <template #content>
                         <DataTable
@@ -267,8 +312,14 @@ const getGolonganIcon = (golongan) => {
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25]"
                         >
-                            <Column field="mahasiswa_id" header="ID Mahasiswa" />
-                            <Column field="nama_mahasiswa" header="Nama Mahasiswa" />
+                            <Column
+                                field="mahasiswa_id"
+                                header="ID Mahasiswa"
+                            />
+                            <Column
+                                field="nama_mahasiswa"
+                                header="Nama Mahasiswa"
+                            />
                             <Column field="npm" header="NPM" />
                             <template
                                 v-for="(kriteria, index) in uniqueCriteria"
@@ -276,14 +327,19 @@ const getGolonganIcon = (golongan) => {
                             >
                                 <Column
                                     :header="kriteria"
-                                    :field="rowData => rowData.nilai_normalisasi[kriteria]"
+                                    :field="
+                                        (rowData) =>
+                                            rowData.nilai_normalisasi[kriteria]
+                                    "
                                 />
                             </template>
                         </DataTable>
                     </template>
                 </Card>
 
-                <h3 class="text-xl font-semibold mb-2 mt-4">Data Optimasi Bobot dan MOORA</h3>
+                <h3 class="text-xl font-semibold mb-4 mt-4">
+                    Data Optimasi Bobot dan MOORA
+                </h3>
                 <Card>
                     <template #content>
                         <DataTable
@@ -296,8 +352,14 @@ const getGolonganIcon = (golongan) => {
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25]"
                         >
-                            <Column field="mahasiswa_id" header="ID Mahasiswa" />
-                            <Column field="nama_mahasiswa" header="Nama Mahasiswa" />
+                            <Column
+                                field="mahasiswa_id"
+                                header="ID Mahasiswa"
+                            />
+                            <Column
+                                field="nama_mahasiswa"
+                                header="Nama Mahasiswa"
+                            />
                             <Column field="npm" header="NPM" frozen />
 
                             <template
@@ -306,7 +368,10 @@ const getGolonganIcon = (golongan) => {
                             >
                                 <Column
                                     :header="kriteria"
-                                    :field="rowData => rowData.optimized_values[kriteria]"
+                                    :field="
+                                        (rowData) =>
+                                            rowData.optimized_values[kriteria]
+                                    "
                                 />
                             </template>
 

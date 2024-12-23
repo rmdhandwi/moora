@@ -70,14 +70,234 @@ class Perhitungan extends Controller
 
         // Langkah: Cek apakah semua kolom yang disebutkan bernilai nol
         foreach ($mahasiswa as $student) {
-            if (
-                $student->sks_total === 0 &&
-                $student->sks_tempuh === 0 &&
-                $student->sks_sisa === 0 &&
-                $student->studi_total === 0 &&
-                $student->studi_sisa === 0 &&
-                $student->studi_tempuh === 0
-            ) {
+            // Cek apakah sks_total dan sks_sisa bernilai nol atau sks_total lebih dari 144 dan sks_sisa nol
+            $sksCondition = ($student->sks_total === 0 || ($student->sks_total > 144 && $student->sks_sisa === 0));
+
+            // Cek apakah studi_total dan studi_sisa bernilai nol atau studi_total lebih dari 14 dan studi_sisa nol
+            $studiCondition = ($student->studi_total === 0 || ($student->studi_total > 14 && $student->studi_sisa === 0));
+
+            // Jika salah satu kondisi terpenuhi, redirect dengan pesan error
+            if ($sksCondition && $studiCondition) {
+                return redirect()->back()->with([
+                    'notif_status' => 'error',
+                    'message'      => 'Terdapat mahasiswa dengan semua data bernilai nol. Periksa data dan coba lagi.',
+                ]);
+            }
+        }
+
+        // Ambil bobot dan tipe kriteria dari tbl_kriteria
+        $kriteria = KriteriaModel::all();
+
+        // Validasi jumlah kriteria
+        if ($kriteria->count() < 6) {
+            return redirect()->back()->with([
+                'notif_status' => 'error',
+                'message'      => 'Jumlah kriteria harus minimal 6.',
+            ]);
+        }
+
+        // Siapkan data bobot, tipe kriteria (benefit/cost), dan total bobot
+        $weights = [];
+        $criteriaTypes = [];
+        $totalBobot = 0;
+
+        // Tempat untuk menampung nilai kriteria yang didapat
+        $kriteriaValues = [];
+
+        foreach ($kriteria as $k) {
+            $normalizedKriteriaName = strtolower(str_replace(' ', '', $k->nama_kriteria));
+            $weights[$normalizedKriteriaName] = $k->bobot / 100; // Bagi dengan 100
+            $criteriaTypes[$normalizedKriteriaName] = $k->type; // Simpan tipe (benefit/cost)
+            $totalBobot += $k->bobot; // Hitung total bobot
+        }
+
+        // Validasi total bobot
+        if ($totalBobot !== 100) {
+            return redirect()->back()->with([
+                'notif_status' => 'error',
+                'message'      => 'Total bobot kriteria harus sama dengan 100.',
+            ]);
+        }
+
+        // Langkah 1: Menyimpan nilai kriteria untuk setiap mahasiswa berdasarkan nama_kriteria
+        foreach ($mahasiswa as $student) {
+            $studentKriteriaValues = [];
+
+            foreach ($weights as $kriteriaName => $weight) {
+                foreach ($student->getAttributes() as $column => $value) {
+                    $normalizedStudentColumn = strtolower(str_replace('_', '', $column));
+                    if ($normalizedStudentColumn === $kriteriaName) {
+                        // Simpan nilai kriteria yang sesuai dengan kolom mahasiswa
+                        $studentKriteriaValues[$kriteriaName] = $value;
+                    }
+                }
+            }
+
+            // Menampung nilai kriteria untuk mahasiswa ini
+            $kriteriaValues[$student->mahasiswa_id] = $studentKriteriaValues;
+        }
+
+
+        // Sekarang kriteriaValues berisi nilai kriteria yang terhubung dengan mahasiswa
+
+        // Langkah 2: Hitung kuadrat dari setiap kriteria untuk normalisasi
+        $squaredSums = array_fill_keys(array_keys($weights), 0);
+
+        foreach ($mahasiswa as $student) {
+            foreach ($weights as $kriteriaName => $weight) {
+                if (isset($kriteriaValues[$student->mahasiswa_id][$kriteriaName])) {
+                    $value = $kriteriaValues[$student->mahasiswa_id][$kriteriaName];
+                    $squaredSums[$kriteriaName] += pow($value, 2);
+                }
+            }
+        }
+
+        // Langkah 3: Normalisasi matriks keputusan (menggunakan rumus X_ij^' = x_ij / sqrt(Sum x_ij^2))
+        $normalizationData = [];
+        foreach ($mahasiswa as $student) {
+            $studentNormalization = [
+                'mahasiswa_id' => $student->mahasiswa_id,
+                'nama_mahasiswa' => $student->nama_mahasiswa,
+                'npm' => $student->npm,
+                'nilai_normalisasi' => [],
+            ];
+
+            foreach ($weights as $kriteriaName => $weight) {
+                if (isset($kriteriaValues[$student->mahasiswa_id][$kriteriaName])) {
+                    $value = $kriteriaValues[$student->mahasiswa_id][$kriteriaName];
+                    // Menggunakan rumus normalisasi
+                    $normalizedValue = $value / sqrt($squaredSums[$kriteriaName]);
+
+                    // Membatasi hasil normalisasi ke 3 angka di belakang koma
+                    $studentNormalization['nilai_normalisasi'][$kriteriaName] = round($normalizedValue, 3);
+                }
+            }
+
+            $normalizationData[] = $studentNormalization;
+        }
+
+        // Langkah 4: Hitung nilai optimasi bobot dan MOORA
+        $optimizationData = [];
+        foreach ($normalizationData as $studentData) {
+            $studentOptimization = [
+                'mahasiswa_id' => $studentData['mahasiswa_id'],
+                'nama_mahasiswa' => $studentData['nama_mahasiswa'],
+                'npm' => $studentData['npm'],
+                'optimized_values' => [], // Nilai optimasi bobot
+                'benefit_sum' => 0, // Jumlah nilai Benefit
+                'cost_sum' => 0,    // Jumlah nilai Cost
+                'moora' => 0,       // Nilai MOORA
+            ];
+
+            // Hitung optimasi bobot untuk setiap kriteria
+            foreach ($studentData['nilai_normalisasi'] as $kriteriaName => $normalizedValue) {
+                $weight = $weights[$kriteriaName];
+                $optimizedValue = $normalizedValue * $weight; // Optimasi bobot
+
+                // Membatasi nilai optimasi ke 3 angka di belakang koma
+                $studentOptimization['optimized_values'][$kriteriaName] = round($optimizedValue, 3);
+
+                // Tentukan tipe kriteria (Benefit/Cost) dan tambahkan ke jumlah yang sesuai
+                if ($criteriaTypes[$kriteriaName] === 'Benefit') {
+                    $studentOptimization['benefit_sum'] += $optimizedValue;
+                } elseif ($criteriaTypes[$kriteriaName] === 'Cost') {
+                    $studentOptimization['cost_sum'] += $optimizedValue;
+                }
+            }
+
+            // Hitung nilai MOORA sebagai selisih antara Benefit dan Cost
+            $studentOptimization['moora'] = round($studentOptimization['benefit_sum'] - $studentOptimization['cost_sum'], 3);
+
+
+            // Tambahkan ke data optimasi
+            $optimizationData[] = $studentOptimization;
+        }
+
+        // Urutkan hasil berdasarkan nilai MOORA
+        usort($optimizationData, function ($a, $b) {
+            return $b['moora'] <=> $a['moora']; // Urutkan dari nilai MOORA tertinggi ke terendah
+        });
+
+        // Langkah 5: Tambahkan rank berdasarkan urutan MOORA
+        $rank = 1;
+        foreach ($optimizationData as &$studentOptimization) {
+            $studentOptimization['rank'] = $rank++;
+        }
+
+        // Langkah 6: Membagi ke dalam 3 golongan berdasarkan nilai MOORA
+        // Hitung nilai MOORA tertinggi dan terendah
+        $mooraValues = array_column($optimizationData, 'moora');
+        $mooraMax = max($mooraValues);
+        $mooraMin = min($mooraValues);
+        $mooraRange = $mooraMax - $mooraMin;
+
+        // Tentukan batas golongan
+        $thresholdAman = $mooraMin + 0.7 * $mooraRange; // Di atas 70% dari rentang
+        $thresholdHatiHati = $mooraMin + 0.3 * $mooraRange; // Di atas 30% dari rentang
+
+
+
+        // Tentukan golongan berdasarkan nilai MOORA
+        foreach ($optimizationData as &$studentOptimization) {
+            $mooraValue = $studentOptimization['moora'];
+
+            if ($mooraValue >= $thresholdAman) {
+                $studentOptimization['golongan'] = 'Aman';
+            } elseif ($mooraValue >= $thresholdHatiHati) {
+                $studentOptimization['golongan'] = 'Hati-Hati';
+            } else {
+                $studentOptimization['golongan'] = 'DO/Pindah';
+            }
+        }
+
+        // Kirim data ke frontend
+        $title = 'Hasil Perhitungan';
+        return Inertia::render('Perhitungan/DataPerhitungan', [
+            'title' => $title,
+            'normalizationData' => $normalizationData,
+            'optimizationData' => $optimizationData, // Data optimasi bobot dan MOORA
+        ]);
+    }
+
+    public function create($id)
+    {
+        $currentUser = auth()->user();
+
+        if ($currentUser->role !== 3) {
+            return redirect()->back()->with([
+                'notif_status' => 'error',
+                'message' => 'Tidak Memiliki Akses.'
+            ]);
+        }
+
+        $dosen = DosenModel::where('user_id', $id)->first();
+
+        if (!$dosen) {
+            return redirect()->back()->with([
+                'notif_status' => 'error',
+                'message' => 'Data dosen tidak ditemukan.'
+            ]);
+        }
+
+        $mahasiswa = MahasiswaModel::where('dosen_id', $dosen->dosen_id)->get();
+
+        if ($mahasiswa->isEmpty()) {
+            return redirect()->back()->with([
+                'notif_status' => 'error',
+                'message' => 'Tidak ada data mahasiswa untuk dosen terkait.'
+            ]);
+        }
+
+        // Langkah: Cek apakah semua kolom yang disebutkan bernilai nol
+        foreach ($mahasiswa as $student) {
+            // Cek apakah sks_total dan sks_sisa bernilai nol atau sks_total lebih dari 144 dan sks_sisa nol
+            $sksCondition = ($student->sks_total === 0 || ($student->sks_total > 144 && $student->sks_sisa === 0));
+
+            // Cek apakah studi_total dan studi_sisa bernilai nol atau studi_total lebih dari 14 dan studi_sisa nol
+            $studiCondition = ($student->studi_total === 0 || ($student->studi_total > 14 && $student->studi_sisa === 0));
+
+            // Jika salah satu kondisi terpenuhi, redirect dengan pesan error
+            if ($sksCondition && $studiCondition) {
                 return redirect()->back()->with([
                     'notif_status' => 'error',
                     'message'      => 'Terdapat mahasiswa dengan semua data bernilai nol. Periksa data dan coba lagi.',
@@ -168,7 +388,7 @@ class Perhitungan extends Controller
                     // Menggunakan rumus normalisasi
                     $normalizedValue = $value / sqrt($squaredSums[$kriteriaName]);
                     // Membatasi hasil normalisasi ke 3 angka di belakang koma
-                    $studentNormalization['nilai_normalisasi'][$kriteriaName] = number_format($normalizedValue, 3);
+                    $studentNormalization['nilai_normalisasi'][$kriteriaName] = round($normalizedValue, 3);
                 }
             }
 
@@ -183,22 +403,32 @@ class Perhitungan extends Controller
                 'nama_mahasiswa' => $studentData['nama_mahasiswa'],
                 'npm' => $studentData['npm'],
                 'optimized_values' => [], // Nilai optimasi bobot
-                'moora' => 0, // Nilai MOORA
+                'benefit_sum' => 0, // Jumlah nilai Benefit
+                'cost_sum' => 0,    // Jumlah nilai Cost
+                'moora' => 0,       // Nilai MOORA
             ];
 
             // Hitung optimasi bobot untuk setiap kriteria
-            $optimizedSum = 0;
             foreach ($studentData['nilai_normalisasi'] as $kriteriaName => $normalizedValue) {
                 $weight = $weights[$kriteriaName];
                 $optimizedValue = $normalizedValue * $weight; // Optimasi bobot
+
                 // Membatasi nilai optimasi ke 3 angka di belakang koma
-                $studentOptimization['optimized_values'][$kriteriaName] = number_format($optimizedValue, 3);
-                $optimizedSum += $optimizedValue;
+                $studentOptimization['optimized_values'][$kriteriaName] = round($optimizedValue, 3);
+
+                // Tentukan tipe kriteria (Benefit/Cost) dan tambahkan ke jumlah yang sesuai
+                if ($criteriaTypes[$kriteriaName] === 'Benefit') {
+                    $studentOptimization['benefit_sum'] += $optimizedValue;
+                } elseif ($criteriaTypes[$kriteriaName] === 'Cost') {
+                    $studentOptimization['cost_sum'] += $optimizedValue;
+                }
             }
 
-            // Simpan nilai optimasi bobot dan total MOORA
-            // Membatasi nilai MOORA ke 3 angka di belakang koma
-            $studentOptimization['moora'] = number_format($optimizedSum, 3); // Total MOORA
+            // Hitung nilai MOORA sebagai selisih antara Benefit dan Cost
+            $studentOptimization['moora'] = round($studentOptimization['benefit_sum'] - $studentOptimization['cost_sum'], 3);
+
+
+            // Tambahkan ke data optimasi
             $optimizationData[] = $studentOptimization;
         }
 
@@ -207,7 +437,6 @@ class Perhitungan extends Controller
             return $b['moora'] <=> $a['moora']; // Urutkan dari nilai MOORA tertinggi ke terendah
         });
 
-
         // Langkah 5: Tambahkan rank berdasarkan urutan MOORA
         $rank = 1;
         foreach ($optimizationData as &$studentOptimization) {
@@ -215,226 +444,28 @@ class Perhitungan extends Controller
         }
 
         // Langkah 6: Membagi ke dalam 3 golongan berdasarkan nilai MOORA
-        $totalMooraSum = array_sum(array_column($optimizationData, 'moora'));
+        // Hitung nilai MOORA tertinggi dan terendah
+        $mooraValues = array_column($optimizationData, 'moora');
+        $mooraMax = max($mooraValues);
+        $mooraMin = min($mooraValues);
+        $mooraRange = $mooraMax - $mooraMin;
 
-        // Tentukan batas untuk setiap golongan
-        $golongan1Limit = ceil($totalMooraSum * 0.15); // Top 15%
-        $golongan2Limit = ceil($totalMooraSum * 0.5); // Top 50%
+        // Tentukan batas golongan
+        $thresholdAman = $mooraMin + 0.7 * $mooraRange; // Di atas 70% dari rentang
+        $thresholdHatiHati = $mooraMin + 0.3 * $mooraRange; // Di atas 30% dari rentang
 
-        // Tambahkan golongan ke setiap mahasiswa
-        foreach ($optimizationData as $index => &$studentOptimization) {
-            if ($index < $golongan1Limit) {
-                $studentOptimization['golongan'] = 'Aman';
-            } elseif ($index < $golongan2Limit) {
-                $studentOptimization['golongan'] = 'Hati-Hati';
-            } else {
-                $studentOptimization['golongan'] = 'DO/Pindah';
-            }
-        }
-
-
-        // Kirim data ke frontend
-        $title = 'Hasil Perhitungan';
-        return Inertia::render('Perhitungan/DataPerhitungan', [
-            'title' => $title,
-            'normalizationData' => $normalizationData,
-            'optimizationData' => $optimizationData, // Data optimasi bobot dan MOORA
-        ]);
-    }
-
-    public function create($id)
-    {
-        $currentUser = auth()->user();
-
-        if ($currentUser->role !== 3) {
-            return redirect()->back()->with([
-                'notif_status' => 'error',
-                'message' => 'Tidak Memiliki Akses.'
-            ]);
-        }
-
-        $dosen = DosenModel::where('user_id', $id)->first();
-
-        if (!$dosen) {
-            return redirect()->back()->with([
-                'notif_status' => 'error',
-                'message' => 'Data dosen tidak ditemukan.'
-            ]);
-        }
-
-        $mahasiswa = MahasiswaModel::where('dosen_id', $dosen->dosen_id)->get();
-
-        if ($mahasiswa->isEmpty()) {
-            return redirect()->back()->with([
-                'notif_status' => 'error',
-                'message' => 'Tidak ada data mahasiswa untuk dosen terkait.'
-            ]);
-        }
-
-        foreach ($mahasiswa as $student) {
-            if (
-                $student->sks_total === 0 &&
-                $student->sks_tempuh === 0 &&
-                $student->sks_sisa === 0 &&
-                $student->studi_total === 0 &&
-                $student->studi_sisa === 0 &&
-                $student->studi_tempuh === 0
-            ) {
-                return redirect()->back()->with([
-                    'notif_status' => 'error',
-                    'message' => 'Terdapat mahasiswa dengan semua data bernilai nol. Periksa data dan coba lagi.'
-                ]);
-            }
-        }
-
-        // Ambil bobot dan tipe kriteria dari tbl_kriteria
-        $kriteria = KriteriaModel::all();
-
-        // Validasi jumlah kriteria
-        if ($kriteria->count() < 6) {
-            return redirect()->back()->with([
-                'notif_status' => 'error',
-                'message'      => 'Jumlah kriteria harus minimal 6.',
-            ]);
-        }
-
-        // Siapkan data bobot, tipe kriteria (benefit/cost), dan total bobot
-        $weights = [];
-        $criteriaTypes = [];
-        $totalBobot = 0;
-
-        // Tempat untuk menampung nilai kriteria yang didapat
-        $kriteriaValues = [];
-
-        foreach ($kriteria as $k) {
-            $normalizedKriteriaName = strtolower(str_replace(' ', '', $k->nama_kriteria));
-            $weights[$normalizedKriteriaName] = $k->bobot / 100; // Bagi dengan 100
-            $criteriaTypes[$normalizedKriteriaName] = $k->type; // Simpan tipe (benefit/cost)
-            $totalBobot += $k->bobot; // Hitung total bobot
-        }
-
-        // Validasi total bobot
-        if ($totalBobot !== 100) {
-            return redirect()->back()->with([
-                'notif_status' => 'error',
-                'message'      => 'Total bobot kriteria harus sama dengan 100.',
-            ]);
-        }
-
-        // Langkah 1: Menyimpan nilai kriteria untuk setiap mahasiswa berdasarkan nama_kriteria
-        foreach ($mahasiswa as $student) {
-            $studentKriteriaValues = [];
-
-            foreach ($weights as $kriteriaName => $weight) {
-                foreach ($student->getAttributes() as $column => $value) {
-                    $normalizedStudentColumn = strtolower(str_replace('_', '', $column));
-                    if ($normalizedStudentColumn === $kriteriaName) {
-                        // Simpan nilai kriteria yang sesuai dengan kolom mahasiswa
-                        $studentKriteriaValues[$kriteriaName] = $value;
-                    }
-                }
-            }
-
-            // Menampung nilai kriteria untuk mahasiswa ini
-            $kriteriaValues[$student->mahasiswa_id] = $studentKriteriaValues;
-        }
-
-
-        // Sekarang kriteriaValues berisi nilai kriteria yang terhubung dengan mahasiswa
-
-        // Langkah 2: Hitung kuadrat dari setiap kriteria untuk normalisasi
-        $squaredSums = array_fill_keys(array_keys($weights), 0);
-
-        foreach ($mahasiswa as $student) {
-            foreach ($weights as $kriteriaName => $weight) {
-                if (isset($kriteriaValues[$student->mahasiswa_id][$kriteriaName])) {
-                    $value = $kriteriaValues[$student->mahasiswa_id][$kriteriaName];
-                    $squaredSums[$kriteriaName] += pow($value, 2);
-                }
-            }
-        }
-
-        // Langkah 3: Normalisasi matriks keputusan (menggunakan rumus X_ij^' = x_ij / sqrt(Sum x_ij^2))
-        $normalizationData = [];
-        foreach ($mahasiswa as $student) {
-            $studentNormalization = [
-                'mahasiswa_id' => $student->mahasiswa_id,
-                'nama_mahasiswa' => $student->nama_mahasiswa,
-                'npm' => $student->npm,
-                'nilai_normalisasi' => [],
-            ];
-
-            foreach ($weights as $kriteriaName => $weight) {
-                if (isset($kriteriaValues[$student->mahasiswa_id][$kriteriaName])) {
-                    $value = $kriteriaValues[$student->mahasiswa_id][$kriteriaName];
-                    // Menggunakan rumus normalisasi
-                    $normalizedValue = $value / sqrt($squaredSums[$kriteriaName]);
-                    // Membatasi hasil normalisasi ke 3 angka di belakang koma
-                    $studentNormalization['nilai_normalisasi'][$kriteriaName] = number_format($normalizedValue, 3);
-                }
-            }
-
-            $normalizationData[] = $studentNormalization;
-        }
-
-        // Langkah 4: Hitung nilai optimasi bobot dan MOORA
-        $optimizationData = [];
-        foreach ($normalizationData as $studentData) {
-            $studentOptimization = [
-                'mahasiswa_id' => $studentData['mahasiswa_id'],
-                'nama_mahasiswa' => $studentData['nama_mahasiswa'],
-                'npm' => $studentData['npm'],
-                'optimized_values' => [], // Nilai optimasi bobot
-                'moora' => 0, // Nilai MOORA
-            ];
-
-            // Hitung optimasi bobot untuk setiap kriteria
-            $optimizedSum = 0;
-            foreach ($studentData['nilai_normalisasi'] as $kriteriaName => $normalizedValue) {
-                $weight = $weights[$kriteriaName];
-                $optimizedValue = $normalizedValue * $weight; // Optimasi bobot
-                // Membatasi nilai optimasi ke 3 angka di belakang koma
-                $studentOptimization['optimized_values'][$kriteriaName] = number_format($optimizedValue, 3);
-                $optimizedSum += $optimizedValue;
-            }
-
-            // Simpan nilai optimasi bobot dan total MOORA
-            // Membatasi nilai MOORA ke 3 angka di belakang koma
-            $studentOptimization['moora'] = number_format($optimizedSum, 3); // Total MOORA
-            $optimizationData[] = $studentOptimization;
-        }
-
-        // Urutkan hasil berdasarkan nilai MOORA
-        usort($optimizationData, function ($a, $b) {
-            return $b['moora'] <=> $a['moora']; // Urutkan dari nilai MOORA tertinggi ke terendah
-        });
-
-
-        // Langkah 5: Tambahkan rank berdasarkan urutan MOORA
-        $rank = 1;
+        // Tentukan golongan berdasarkan nilai MOORA
         foreach ($optimizationData as &$studentOptimization) {
-            $studentOptimization['rank'] = $rank++;
-        }
+            $mooraValue = $studentOptimization['moora'];
 
-        // Langkah 6: Membagi ke dalam 3 golongan berdasarkan nilai MOORA
-        $totalMooraSum = array_sum(array_column($optimizationData, 'moora'));
-
-        // dd($totalMooraSum);
-        // Tentukan batas untuk setiap golongan
-        $golongan1Limit = ceil($totalMooraSum * 0.15); // Top 15%
-        $golongan2Limit = ceil($totalMooraSum * 0.5); // Top 50%
-
-        // Tambahkan golongan ke setiap mahasiswa
-        foreach ($optimizationData as $index => &$studentOptimization) {
-            if ($index < $golongan1Limit) {
+            if ($mooraValue >= $thresholdAman) {
                 $studentOptimization['golongan'] = 'Aman';
-            } elseif ($index < $golongan2Limit) {
+            } elseif ($mooraValue >= $thresholdHatiHati) {
                 $studentOptimization['golongan'] = 'Hati-Hati';
             } else {
                 $studentOptimization['golongan'] = 'DO/Pindah';
             }
         }
-
 
         // Kirim data ke frontend
         $title = 'Hasil Perhitungan';
