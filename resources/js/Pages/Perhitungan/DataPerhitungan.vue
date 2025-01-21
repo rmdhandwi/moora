@@ -1,9 +1,9 @@
 <script setup>
 import TemplateLayout from "@/Layouts/TemplateLayout.vue";
+import { Head } from "@inertiajs/vue3";
 import {
     DataTable,
     Column,
-    Card,
     TabView,
     TabPanel,
     Tag,
@@ -12,7 +12,7 @@ import {
     InputText,
     IconField,
 } from "primevue";
-import { defineProps, ref, computed, reactive } from "vue";
+import { defineProps, ref, reactive } from "vue";
 import { FilterMatchMode } from "@primevue/core/api";
 
 const props = defineProps({
@@ -20,6 +20,7 @@ const props = defineProps({
     title: String,
     normalizationData: Array, // Data normalisasi dari backend
     optimizationData: Array, // Data optimasi bobot dan MOORA dari backend
+    username: String, // Data username dari backend
 });
 
 const filters = reactive({
@@ -30,39 +31,66 @@ const dtAman = ref(null);
 const dtHatiHati = ref(null);
 const dtDoPindah = ref(null);
 
+const activeGolongan = ref(0); // Tab yang aktif
+
 // Fungsi reset filter
 const resetFilters = () => {
     filters.global.value = null;
 };
 
-const activeGolongan = ref(0);
-
 // Filter data berdasarkan golongan
-const filteredData = (golongan) =>
-    props.optimizationData
-        .filter((item) => item.golongan === golongan)
+const filteredData = (golongan) => {
+    const globalFilter = filters.global.value?.toLowerCase() || "";
+    return props.optimizationData
+        .filter(
+            (item) =>
+                item.golongan === golongan &&
+                (!globalFilter ||
+                    item.nama_mahasiswa.toLowerCase().includes(globalFilter))
+        )
         .map((item, index) => ({
             ...item,
             index: index + 1, // Tambahkan indeks
         }));
+};
+
+// Fungsi pencarian global di semua tab
+const searchAllTabs = () => {
+    const globalFilter = filters.global.value?.toLowerCase() || "";
+    if (!globalFilter) return;
+
+    // Cari di semua data dan ambil golongan pertama yang cocok
+    const firstMatch = props.optimizationData.find((item) =>
+        item.nama_mahasiswa.toLowerCase().includes(globalFilter)
+    );
+
+    if (firstMatch) {
+        // Aktifkan tab sesuai golongan yang ditemukan
+        switch (firstMatch.golongan) {
+            case "Aman":
+                activeGolongan.value = 0;
+                break;
+            case "Hati-Hati":
+                activeGolongan.value = 1;
+                break;
+            case "DO/Pindah":
+                activeGolongan.value = 2;
+                break;
+        }
+    }
+};
 
 // Fungsi untuk mengekspor DataTable ke CSV berdasarkan tab aktif
 const exportCSV = () => {
     switch (activeGolongan.value) {
         case 0: // Tab Aman
-            if (dtAman.value) {
-                dtAman.value.exportCSV();
-            }
+            dtAman.value?.exportCSV();
             break;
         case 1: // Tab Hati-Hati
-            if (dtHatiHati.value) {
-                dtHatiHati.value.exportCSV();
-            }
+            dtHatiHati.value?.exportCSV();
             break;
         case 2: // Tab DO/Pindah
-            if (dtDoPindah.value) {
-                dtDoPindah.value.exportCSV();
-            }
+            dtDoPindah.value?.exportCSV();
             break;
     }
 };
@@ -94,16 +122,11 @@ const getGolonganIcon = (golongan) => {
             return "pi pi-info-circle";
     }
 };
-
-// // Ambil kriteria unik dari data normalisasi
-// const uniqueCriteria = computed(() => {
-//     if (!props.normalizationData.length) return [];
-//     return Object.keys(props.normalizationData[0].nilai_normalisasi); // Mengambil kriteria dari data pertama
-// });
 </script>
 
 <template>
-    <TemplateLayout :auth="auth" :title="title">
+    <Head :title="props.title" />
+    <TemplateLayout :auth="auth" :title="title" :username="props.username">
         <template #content>
             <div class="p-4">
                 <div class="flex justify-between items-center mb-4">
@@ -123,7 +146,6 @@ const getGolonganIcon = (golongan) => {
                         </Button>
                     </div>
                 </div>
-
                 <!-- Global Search -->
                 <div class="mb-4 flex justify-between items-center">
                     <div class="flex justify-between items-center">
@@ -133,8 +155,9 @@ const getGolonganIcon = (golongan) => {
                             </InputIcon>
                             <InputText
                                 v-model="filters.global.value"
-                                placeholder="Cari Data Mahasiswa"
+                                placeholder="Cari Nama Mahasiswa di Semua Tab"
                                 class="w-full md:w-auto"
+                                @input="searchAllTabs"
                             />
                         </IconField>
                         <Button
@@ -168,6 +191,13 @@ const getGolonganIcon = (golongan) => {
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25, 50]"
                         >
+                            <!-- Pesan jika data kosong -->
+                            <template #empty>
+                                <div class="text-center">
+                                    Data Mahasiswa tidak Ditemukan
+                                </div>
+                            </template>
+
                             <Column field="index" header="No" />
                             <Column
                                 field="nama_mahasiswa"
@@ -208,6 +238,13 @@ const getGolonganIcon = (golongan) => {
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25, 50]"
                         >
+                            <!-- Pesan jika data kosong -->
+                            <template #empty>
+                                <div class="text-center">
+                                    Data Mahasiswa tidak Ditemukan
+                                </div>
+                            </template>
+
                             <Column field="index" header="No" />
                             <Column
                                 field="nama_mahasiswa"
@@ -248,6 +285,13 @@ const getGolonganIcon = (golongan) => {
                             :rows="10"
                             :rowsPerPageOptions="[5, 10, 25, 50, 100]"
                         >
+                            <!-- Pesan jika data kosong -->
+                            <template #empty>
+                                <div class="text-center">
+                                    Data Mahasiswa tidak Ditemukan
+                                </div>
+                            </template>
+                            
                             <Column field="index" header="No" />
                             <Column
                                 field="nama_mahasiswa"

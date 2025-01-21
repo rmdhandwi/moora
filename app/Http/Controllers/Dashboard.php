@@ -8,6 +8,7 @@ use App\Models\KriteriaModel;
 use App\Models\MahasiswaModel;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 use function Laravel\Prompts\select;
@@ -16,7 +17,7 @@ class Dashboard extends Controller
 {
   public function DashboardPage()
   {
-    $currentUser = auth()->user();
+    $currentUser = Auth::user();
     $Dosen = DosenModel::where('user_id', $currentUser->user_id)->first();
 
     $title = 'Dashboard';
@@ -43,6 +44,9 @@ class Dashboard extends Controller
         ];
       });
 
+    $username = DosenModel::where('user_id', $currentUser->user_id)
+      ->value('nama_dosen');
+
     // Kirim data ke view
     return Inertia::render('Admin/DashboardPage', [
       'title' => $title,
@@ -52,8 +56,8 @@ class Dashboard extends Controller
       'mahasiswa' => $mahasiswa,
       'angkatan' => $angkatan,
       'angkatanData' => $angkatanData,
-      'bydosen' => $bydosen, // Tambahkan nilai ini hanya jika ada
+      'bydosen' => $bydosen,
+      'username' => $username
     ]);
   }
-
 }

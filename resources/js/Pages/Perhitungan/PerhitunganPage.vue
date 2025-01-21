@@ -26,6 +26,8 @@ const props = defineProps({
     auth: Object,
     angkatan: Object,
     mahasiswa: Object,
+    username: String,
+    tahun: String,
 });
 
 // ceknotif
@@ -149,11 +151,40 @@ const handleErrorToast = () => {
     <Head :title="props.title" />
     <Toast position="top-center" group="tc" />
     <ConfirmPopup></ConfirmPopup>
-    <TemplateLayout :auth="props.auth" :title="props.title">
+    <TemplateLayout
+        :auth="props.auth"
+        :title="props.title"
+        :username="props.username"
+    >
         <template #content>
             <div class="flex items-center justify-between mb-4">
                 <span class="text-2xl font-bold">Data {{ props.title }}</span>
             </div>
+
+            <template v-if="props.auth.user.role === 3">
+                <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-4 mb-4">
+                    <!-- Card for Dosen -->
+                    <Card>
+                        <template #title>
+                            <span class="text-xl font-bold">Dosen</span>
+                        </template>
+                        <template #content>
+                            <p class="text-lg">{{ props.username }}</p>
+                        </template>
+                    </Card>
+                    <!-- Card for Angkatan -->
+                    <Card>
+                        <template #title>
+                            <span class="text-xl font-bold"
+                                >Tahun Angkatan</span
+                            >
+                        </template>
+                        <template #content>
+                            <p class="text-lg">{{ props.tahun }}</p>
+                        </template>
+                    </Card>
+                </div>
+            </template>
 
             <!-- Tabel -->
             <Card>
@@ -222,6 +253,7 @@ const handleErrorToast = () => {
                                             }}
                                         </Message>
                                     </div>
+
                                     <div class="flex items-center">
                                         <Button
                                             @click="hitung"
@@ -259,10 +291,12 @@ const handleErrorToast = () => {
                         <Column field="index" header="No" />
                         <Column frozen field="npm" header="NPM" />
                         <Column
+                            :hidden="props.auth.user.role === 3"
                             field="angkatan.tahun_angkatan"
                             header="Tahun Angkatan"
                         />
                         <Column
+                            :hidden="props.auth.user.role === 3"
                             field="dosen.nama_dosen"
                             header="Dosen Pembimbing"
                         />
@@ -271,11 +305,22 @@ const handleErrorToast = () => {
                             field="nama_mahasiswa"
                             header="Nama Mahasiswa"
                         />
-                        <Column field="sks_total" header="Total SKS" />
+                        <Column
+                            :hidden="props.auth.user.role === 3"
+                            field="sks_total"
+                            header="Total SKS"
+                        />
                         <Column field="sks_tempuh" header="SKS Tempuh" />
                         <Column field="sks_sisa" header="SKS Sisa" />
-                        <Column field="studi_total" header="Total Studi" />
-                        <Column field="studi_tempuh" header="Studi Tempuh" />
+                        <Column
+                            :hidden="props.auth.user.role === 3"
+                            field="studi_total"
+                            header="Total Studi"
+                        />
+                        <Column
+                            field="studi_tempuh"
+                            header="Studi Tempuh"
+                        />
                         <Column field="studi_sisa" header="Studi Sisa" />
                     </DataTable>
                 </template>

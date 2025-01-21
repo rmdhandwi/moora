@@ -29,6 +29,7 @@ const props = defineProps({
     auth: Object,
     angkatan: Object,
     dosen: Object,
+    username: String,
 });
 
 // ceknotif
@@ -228,7 +229,7 @@ const confirmDelete = (data) => {
     <Toast position="top-center" group="tc" />
     <ConfirmPopup></ConfirmPopup>
     <Head :title="props.title" />
-    <TemplateLayout :auth="props.auth" :title="props.title">
+    <TemplateLayout :auth="props.auth" :title="props.title" :username="props.username">
         <template #content>
             <div class="flex items-center justify-between mb-4">
                 <span class="text-2xl font-bold">Data {{ props.title }}</span>

@@ -65,7 +65,7 @@ class DosenModel extends Model
         return $this->hasMany(MahasiswaModel::class, 'dosen_id', 'dosen_id');
     }
 
-    public function angakatan()
+    public function angkatan()
     {
         return $this->hasOne(AngkatanModel::class, 'dosen_id', 'dosen_id');
     }

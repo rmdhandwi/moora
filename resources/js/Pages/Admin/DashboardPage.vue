@@ -16,6 +16,7 @@ const props = defineProps({
     mahasiswa: Number,
     angkatanData: Array,
     bydosen: Number,
+    username: String,
 });
 
 const toast = useToast();
@@ -101,7 +102,7 @@ onMounted(() => {
 <template>
     <Toast position="top-center" group="tc" />
     <Head :title="props.title" />
-    <TemplateLayout :auth="props.auth" :title="props.title">
+    <TemplateLayout :auth="props.auth" :title="props.title" :username="props.username">
         <template #content>
             <!-- Cards -->
             <div

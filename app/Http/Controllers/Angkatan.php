@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\AngkatanModel;
 use App\Models\DosenModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class Angkatan extends Controller
@@ -14,11 +15,15 @@ class Angkatan extends Controller
         $title = 'Angkatan';
         $angkatan = AngkatanModel::with('dosen')->get();
         $dosen = DosenModel::all();
+        $currentUser = Auth::user();
+        $username = DosenModel::where('user_id', $currentUser->user_id)
+            ->value('nama_dosen');
 
         return Inertia::render('Admin/AngkatanPage', [
             'title' => $title,
             'angkatan' => $angkatan,
-            'dosen' => $dosen
+            'dosen' => $dosen,
+            'username' => $username
         ]);
     }
 

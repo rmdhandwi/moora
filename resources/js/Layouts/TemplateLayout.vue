@@ -14,6 +14,7 @@ import { router } from "@inertiajs/vue3";
 const props = defineProps({
     auth: Object,
     title: String,
+    username: String,
 });
 
 const role = props.auth.user.role;
@@ -272,7 +273,11 @@ const logout = (event) => {
                 <Tag
                     icon="pi pi-user"
                     severity="secondary"
-                    :value="props.auth.user.username"
+                    :value="
+                        props.auth.user.role !== 3
+                            ? props.auth.user.username
+                            : props.username
+                    "
                 ></Tag>
             </header>
 

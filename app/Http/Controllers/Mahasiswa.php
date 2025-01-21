@@ -7,6 +7,7 @@ use App\Models\DosenModel;
 use App\Models\MahasiswaModel;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class Mahasiswa extends Controller
@@ -14,7 +15,7 @@ class Mahasiswa extends Controller
     public function mahasiswaPage()
     {
         $title = 'Mahasiswa';
-        $currentUser = auth()->user(); // Mendapatkan user yang sedang login
+        $currentUser = Auth::user(); // Mendapatkan user yang sedang login
 
         // Inisialisasi variabel mahasiswa
         $mahasiswa = [];
@@ -41,21 +42,40 @@ class Mahasiswa extends Controller
         }
 
         // Ambil data angkatan dan dosen untuk dikirim ke view
+        $currentUser = Auth::user();
         $angkatan = AngkatanModel::all();
         $dosen = DosenModel::all();
+        // Ambil nama dosen dan tahun angkatan yang terkait
+        $usernameWithAngkatan = DosenModel::where('user_id', $currentUser->user_id)
+        ->with(['angkatan' => function ($query) {
+            $query->select('dosen_id', 'tahun_angkatan'); // Kolom yang ingin diambil dari tbl_angkatan
+        }])
+            ->select('dosen_id', 'nama_dosen') // Kolom yang ingin diambil dari DosenModel
+            ->first();
+
+        if ($usernameWithAngkatan) {
+            $namaDosen = $usernameWithAngkatan->nama_dosen;
+            $tahunAngkatan = $usernameWithAngkatan->angkatan->tahun_angkatan ?? 'Tidak ada data angkatan';
+        } else {
+            $namaDosen = 'Tidak ditemukan';
+            $tahunAngkatan = 'Tidak ditemukan';
+        }
+
 
         return Inertia::render('Mahasiswa/MahasiswaPage', [
             'title' => $title,
             'angkatan' => $angkatan,
             'dosen'    => $dosen,
-            'mahasiswa' => $mahasiswa
+            'mahasiswa' => $mahasiswa,
+            'username' => $namaDosen,
+            'tahun' => $tahunAngkatan
         ]);
     }
 
 
     public function store(Request $request)
     {
-        $currentUser = auth()->user(); // Mendapatkan user yang sedang login
+        $currentUser = Auth::user(); // Mendapatkan user yang sedang login
 
         // Validasi khusus untuk role 
         if ($currentUser->role == 1) {
@@ -175,7 +195,7 @@ class Mahasiswa extends Controller
 
     public function update(Request $request, $id)
     {
-        $currentUser = auth()->user(); // Mendapatkan user yang sedang login
+        $currentUser = Auth::user(); // Mendapatkan user yang sedang login
 
         // Cari data mahasiswa berdasarkan ID
         $mahasiswa = MahasiswaModel::findOrFail($id);

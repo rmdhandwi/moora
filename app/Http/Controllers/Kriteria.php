@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\DosenModel;
 use App\Models\KriteriaModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class Kriteria extends Controller
@@ -12,10 +14,16 @@ class Kriteria extends Controller
     {
         $title = 'Kriteria';
         $kriteria = KriteriaModel::all();
+        $currentUser = Auth::user();
+
+        $username = DosenModel::where('user_id', $currentUser->user_id)
+            ->value('nama_dosen');
+
 
         return Inertia::render('Admin/KriteriaPage', [
             'kriteria' => $kriteria,
-            'title' => $title
+            'title' => $title,
+            'username' => $username,
         ]);
     }
 

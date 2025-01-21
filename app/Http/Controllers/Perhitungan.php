@@ -7,6 +7,7 @@ use App\Models\DosenModel;
 use App\Models\KriteriaModel;
 use App\Models\MahasiswaModel;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class Perhitungan extends Controller
@@ -15,7 +16,7 @@ class Perhitungan extends Controller
     {
         $title = 'Perhitungan';
 
-        $currentUser = auth()->user(); // Mendapatkan user yang sedang login
+        $currentUser = Auth::user(); // Mendapatkan user yang sedang login
 
         // Inisialisasi variabel mahasiswa
         $mahasiswa = [];
@@ -43,10 +44,31 @@ class Perhitungan extends Controller
 
         $Angkatan = AngkatanModel::all();
 
+        $currentUser = Auth::user();
+        // Ambil nama dosen dan tahun angkatan yang terkait
+        $usernameWithAngkatan = DosenModel::where('user_id', $currentUser->user_id)
+        ->with(['angkatan' => function ($query) {
+            $query->select('dosen_id', 'tahun_angkatan'); // Kolom yang ingin diambil dari tbl_angkatan
+        }])
+            ->select('dosen_id', 'nama_dosen') // Kolom yang ingin diambil dari DosenModel
+            ->first();
+
+        if ($usernameWithAngkatan) {
+            $namaDosen = $usernameWithAngkatan->nama_dosen;
+            $tahunAngkatan = $usernameWithAngkatan->angkatan->tahun_angkatan ?? 'Tidak ada data angkatan';
+        } else {
+            $namaDosen = 'Tidak ditemukan';
+            $tahunAngkatan = 'Tidak ditemukan';
+        }
+
+
+
         return Inertia::render('Perhitungan/PerhitunganPage', [
             'title' => $title,
             'angkatan' => $Angkatan,
-            'mahasiswa' => $mahasiswa
+            'mahasiswa' => $mahasiswa,
+            'username' => $namaDosen,
+            'tahun' => $tahunAngkatan
         ]);
     }
 
@@ -152,6 +174,8 @@ class Perhitungan extends Controller
             }
         }
 
+        // dd(pow($studentKriteriaValues['skstempuh'], 2), $kriteriaValues);
+
         // Langkah 3: Normalisasi matriks keputusan (menggunakan rumus X_ij^' = x_ij / sqrt(Sum x_ij^2))
         $normalizationData = [];
         foreach ($mahasiswa as $student) {
@@ -167,9 +191,8 @@ class Perhitungan extends Controller
                     $value = $kriteriaValues[$student->mahasiswa_id][$kriteriaName];
                     // Menggunakan rumus normalisasi
                     $normalizedValue = $value / sqrt($squaredSums[$kriteriaName]);
-
                     // Membatasi hasil normalisasi ke 3 angka di belakang koma
-                    $studentNormalization['nilai_normalisasi'][$kriteriaName] = round($normalizedValue, 3);
+                    $studentNormalization['nilai_normalisasi'][$kriteriaName] = number_format($normalizedValue, 3);
                 }
             }
 
@@ -195,7 +218,7 @@ class Perhitungan extends Controller
                 $optimizedValue = $normalizedValue * $weight; // Optimasi bobot
 
                 // Membatasi nilai optimasi ke 3 angka di belakang koma
-                $studentOptimization['optimized_values'][$kriteriaName] = round($optimizedValue, 3);
+                $studentOptimization['optimized_values'][$kriteriaName] = number_format($optimizedValue, 3);
 
                 // Tentukan tipe kriteria (Benefit/Cost) dan tambahkan ke jumlah yang sesuai
                 if ($criteriaTypes[$kriteriaName] === 'Benefit') {
@@ -206,7 +229,7 @@ class Perhitungan extends Controller
             }
 
             // Hitung nilai MOORA sebagai selisih antara Benefit dan Cost
-            $studentOptimization['moora'] = round($studentOptimization['benefit_sum'] - $studentOptimization['cost_sum'], 3);
+            $studentOptimization['moora'] = number_format($studentOptimization['benefit_sum'] - $studentOptimization['cost_sum'], 3);
 
 
             // Tambahkan ke data optimasi
@@ -235,8 +258,6 @@ class Perhitungan extends Controller
         $thresholdAman = $mooraMin + 0.7 * $mooraRange; // Di atas 70% dari rentang
         $thresholdHatiHati = $mooraMin + 0.3 * $mooraRange; // Di atas 30% dari rentang
 
-
-
         // Tentukan golongan berdasarkan nilai MOORA
         foreach ($optimizationData as &$studentOptimization) {
             $mooraValue = $studentOptimization['moora'];
@@ -250,18 +271,23 @@ class Perhitungan extends Controller
             }
         }
 
+        $currentUser = Auth::user();
+        $username = DosenModel::where('user_id', $currentUser->user_id)
+            ->value('nama_dosen');
+
         // Kirim data ke frontend
         $title = 'Hasil Perhitungan';
         return Inertia::render('Perhitungan/DataPerhitungan', [
             'title' => $title,
             'normalizationData' => $normalizationData,
-            'optimizationData' => $optimizationData, // Data optimasi bobot dan MOORA
+            'optimizationData' => $optimizationData,
+            'username' => $username
         ]);
     }
 
     public function create($id)
     {
-        $currentUser = auth()->user();
+        $currentUser = Auth::user();
 
         if ($currentUser->role !== 3) {
             return redirect()->back()->with([
@@ -372,6 +398,8 @@ class Perhitungan extends Controller
             }
         }
 
+        // dd($squaredSums);
+
         // Langkah 3: Normalisasi matriks keputusan (menggunakan rumus X_ij^' = x_ij / sqrt(Sum x_ij^2))
         $normalizationData = [];
         foreach ($mahasiswa as $student) {
@@ -388,12 +416,14 @@ class Perhitungan extends Controller
                     // Menggunakan rumus normalisasi
                     $normalizedValue = $value / sqrt($squaredSums[$kriteriaName]);
                     // Membatasi hasil normalisasi ke 3 angka di belakang koma
-                    $studentNormalization['nilai_normalisasi'][$kriteriaName] = round($normalizedValue, 3);
+                    $studentNormalization['nilai_normalisasi'][$kriteriaName] = number_format($normalizedValue, 3);
                 }
             }
 
             $normalizationData[] = $studentNormalization;
         }
+
+
 
         // Langkah 4: Hitung nilai optimasi bobot dan MOORA
         $optimizationData = [];
@@ -414,7 +444,7 @@ class Perhitungan extends Controller
                 $optimizedValue = $normalizedValue * $weight; // Optimasi bobot
 
                 // Membatasi nilai optimasi ke 3 angka di belakang koma
-                $studentOptimization['optimized_values'][$kriteriaName] = round($optimizedValue, 3);
+                $studentOptimization['optimized_values'][$kriteriaName] = number_format($optimizedValue, 3);
 
                 // Tentukan tipe kriteria (Benefit/Cost) dan tambahkan ke jumlah yang sesuai
                 if ($criteriaTypes[$kriteriaName] === 'Benefit') {
@@ -425,12 +455,13 @@ class Perhitungan extends Controller
             }
 
             // Hitung nilai MOORA sebagai selisih antara Benefit dan Cost
-            $studentOptimization['moora'] = round($studentOptimization['benefit_sum'] - $studentOptimization['cost_sum'], 3);
+            $studentOptimization['moora'] = number_format($studentOptimization['benefit_sum'] - $studentOptimization['cost_sum'], 3);
 
 
             // Tambahkan ke data optimasi
             $optimizationData[] = $studentOptimization;
         }
+
 
         // Urutkan hasil berdasarkan nilai MOORA
         usort($optimizationData, function ($a, $b) {
@@ -467,12 +498,18 @@ class Perhitungan extends Controller
             }
         }
 
+        $currentUser = Auth::user();
+        $username = DosenModel::where('user_id', $currentUser->user_id)
+            ->value('nama_dosen');
+
+
         // Kirim data ke frontend
         $title = 'Hasil Perhitungan';
         return Inertia::render('Perhitungan/DataPerhitungan', [
             'title' => $title,
             'normalizationData' => $normalizationData,
             'optimizationData' => $optimizationData, // Data optimasi bobot dan MOORA
+            'username' => $username
         ]);
     }
 }

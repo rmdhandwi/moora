@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DosenModel;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class Dosen extends Controller
@@ -14,11 +15,16 @@ class Dosen extends Controller
         $title = 'Dosen';
         $dosen = DosenModel::with('users')->get();
         $users = User::where('role', 3)->get();
+        $currentUser = Auth::user();
+
+        $username = DosenModel::where('user_id', $currentUser->user_id)
+            ->value('nama_dosen');
 
         return Inertia::render('Dosen/DosenPage', [
             'title' => $title,
             'dosen' => $dosen,
-            'users' => $users
+            'users' => $users,
+            'username' => $username,
         ]);
     }
 
