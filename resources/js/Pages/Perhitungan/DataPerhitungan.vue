@@ -158,8 +158,8 @@ const getGolonganIcon = (golongan) => {
                             </InputIcon>
                             <InputText
                                 v-model="filters.global.value"
-                                placeholder="Cari Nama Mahasiswa di Semua Tab"
-                                class="w-full md:w-auto"
+                                placeholder="Cari Data"
+                                class="w-full md:w-[500px]"
                                 @input="searchAllTabs"
                             />
                         </IconField>
