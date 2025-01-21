@@ -38,31 +38,17 @@ const resetFilters = () => {
     filters.global.value = null;
 };
 
-// Filter data berdasarkan golongan
-const filteredData = (golongan) => {
-    const globalFilter = filters.global.value?.toLowerCase() || "";
-    return props.optimizationData
-        .filter(
-            (item) =>
-                item.golongan === golongan &&
-                (!globalFilter ||
-                    item.nama_mahasiswa.toLowerCase().includes(globalFilter))
-        )
-        .map((item, index) => ({
-            ...item,
-            index: index + 1, // Tambahkan indeks
-        }));
-};
-
-// Fungsi pencarian global di semua tab
 const searchAllTabs = () => {
     const globalFilter = filters.global.value?.toLowerCase() || "";
     if (!globalFilter) return;
 
-    // Cari di semua data dan ambil golongan pertama yang cocok
-    const firstMatch = props.optimizationData.find((item) =>
-        item.nama_mahasiswa.toLowerCase().includes(globalFilter)
-    );
+    // Cari di semua data dan golongan pertama yang cocok
+    const firstMatch = props.optimizationData.find((item) => {
+        // Periksa setiap nilai di dalam objek item (konversi ke string untuk pencarian fleksibel)
+        return Object.values(item)
+            .map((value) => value?.toString().toLowerCase())
+            .some((val) => val.includes(globalFilter));
+    });
 
     if (firstMatch) {
         // Aktifkan tab sesuai golongan yang ditemukan
@@ -78,6 +64,23 @@ const searchAllTabs = () => {
                 break;
         }
     }
+};
+
+// Filter data di tab aktif, cari di semua kolom
+const filteredData = (golongan) => {
+    const globalFilter = filters.global.value?.toLowerCase() || "";
+    return props.optimizationData
+        .filter((item) => {
+            const matchesGolongan = item.golongan === golongan;
+            const matchesGlobalFilter = Object.values(item)
+                .map((value) => value?.toString().toLowerCase())
+                .some((val) => val.includes(globalFilter));
+            return matchesGolongan && matchesGlobalFilter;
+        })
+        .map((item, index) => ({
+            ...item,
+            index: index + 1, // Tambahkan indeks
+        }));
 };
 
 // Fungsi untuk mengekspor DataTable ke CSV berdasarkan tab aktif
@@ -291,7 +294,7 @@ const getGolonganIcon = (golongan) => {
                                     Data Mahasiswa tidak Ditemukan
                                 </div>
                             </template>
-                            
+
                             <Column field="index" header="No" />
                             <Column
                                 field="nama_mahasiswa"
