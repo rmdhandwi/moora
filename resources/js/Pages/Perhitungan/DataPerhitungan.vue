@@ -18,9 +18,9 @@ import { FilterMatchMode } from "@primevue/core/api";
 const props = defineProps({
     auth: Object,
     title: String,
-    normalizationData: Array, // Data normalisasi dari backend
-    optimizationData: Array, // Data optimasi bobot dan MOORA dari backend
-    username: String, // Data username dari backend
+    normalizationData: Array,
+    optimizationData: Array,
+    username: String,
 });
 
 const filters = reactive({
@@ -30,10 +30,8 @@ const filters = reactive({
 const dtAman = ref(null);
 const dtHatiHati = ref(null);
 const dtDoPindah = ref(null);
+const activeGolongan = ref(0);
 
-const activeGolongan = ref(0); // Tab yang aktif
-
-// Fungsi reset filter
 const resetFilters = () => {
     filters.global.value = null;
 };
@@ -42,16 +40,13 @@ const searchAllTabs = () => {
     const globalFilter = filters.global.value?.toLowerCase() || "";
     if (!globalFilter) return;
 
-    // Cari di semua data dan golongan pertama yang cocok
     const firstMatch = props.optimizationData.find((item) => {
-        // Periksa setiap nilai di dalam objek item (konversi ke string untuk pencarian fleksibel)
         return Object.values(item)
             .map((value) => value?.toString().toLowerCase())
             .some((val) => val.includes(globalFilter));
     });
 
     if (firstMatch) {
-        // Aktifkan tab sesuai golongan yang ditemukan
         switch (firstMatch.golongan) {
             case "Aman":
                 activeGolongan.value = 0;
@@ -66,63 +61,65 @@ const searchAllTabs = () => {
     }
 };
 
-// Filter data di tab aktif, cari di semua kolom
 const filteredData = (golongan) => {
     const globalFilter = filters.global.value?.toLowerCase() || "";
     return props.optimizationData
         .filter((item) => {
-            const matchesGolongan = item.golongan === golongan;
-            const matchesGlobalFilter = Object.values(item)
-                .map((value) => value?.toString().toLowerCase())
-                .some((val) => val.includes(globalFilter));
-            return matchesGolongan && matchesGlobalFilter;
+            return (
+                item.golongan === golongan &&
+                Object.values(item)
+                    .map((value) => value?.toString().toLowerCase())
+                    .some((val) => val.includes(globalFilter))
+            );
         })
         .map((item, index) => ({
             ...item,
-            index: index + 1, // Tambahkan indeks
+            index: index + 1,
         }));
 };
 
-// Fungsi untuk mengekspor DataTable ke CSV berdasarkan tab aktif
 const exportCSV = () => {
     switch (activeGolongan.value) {
-        case 0: // Tab Aman
+        case 0:
             dtAman.value?.exportCSV();
             break;
-        case 1: // Tab Hati-Hati
+        case 1:
             dtHatiHati.value?.exportCSV();
             break;
-        case 2: // Tab DO/Pindah
+        case 2:
             dtDoPindah.value?.exportCSV();
             break;
     }
 };
 
-// Fungsi untuk memberi class CSS berdasarkan nilai golongan
 const getGolonganClass = (golongan) => {
-    switch (golongan) {
-        case "Aman":
-            return "success";
-        case "Hati-Hati":
-            return "warn";
-        case "DO/Pindah":
-            return "danger";
-        default:
-            return "info";
-    }
+    return (
+        {
+            Aman: "success",
+            "Hati-Hati": "warn",
+            "DO/Pindah": "danger",
+        }[golongan] || "info"
+    );
 };
 
-// Fungsi untuk menentukan ikon berdasarkan golongan
 const getGolonganIcon = (golongan) => {
-    switch (golongan) {
-        case "Aman":
-            return "pi pi-check-circle";
-        case "Hati-Hati":
-            return "pi pi-exclamation-triangle";
-        case "DO/Pindah":
-            return "pi pi-times-circle";
-        default:
-            return "pi pi-info-circle";
+    return (
+        {
+            Aman: "pi pi-check-circle",
+            "Hati-Hati": "pi pi-exclamation-triangle",
+            "DO/Pindah": "pi pi-times-circle",
+        }[golongan] || "pi pi-info-circle"
+    );
+};
+
+const expandedRows = ref([]);
+
+const toggleRowExpansion = (data) => {
+    const index = expandedRows.value.findIndex((row) => row.npm === data.npm);
+    if (index === -1) {
+        expandedRows.value.push(data);
+    } else {
+        expandedRows.value.splice(index, 1);
     }
 };
 </script>
@@ -210,20 +207,55 @@ const getGolonganIcon = (golongan) => {
                             <Column field="moora" header="Nilai Akhir" />
                             <Column header="Golongan" field="golongan">
                                 <template #body="slotProps">
-                                    <Tag
-                                        :severity="
-                                            getGolonganClass(
-                                                slotProps.data.golongan
-                                            )
+                                    <div
+                                        @click="
+                                            toggleRowExpansion(slotProps.data)
                                         "
-                                        :icon="
-                                            getGolonganIcon(
-                                                slotProps.data.golongan
-                                            )
-                                        "
+                                        class="cursor-pointer"
                                     >
-                                        {{ slotProps.data.golongan }}
-                                    </Tag>
+                                        <Tag
+                                            :severity="
+                                                getGolonganClass(
+                                                    slotProps.data.golongan
+                                                )
+                                            "
+                                            :icon="
+                                                getGolonganIcon(
+                                                    slotProps.data.golongan
+                                                )
+                                            "
+                                        >
+                                            {{ slotProps.data.golongan }}
+                                        </Tag>
+                                        <div
+                                            v-if="
+                                                expandedRows.includes(
+                                                    slotProps.data
+                                                )
+                                            "
+                                            class="p-2 bg-gray-100 rounded mt-2"
+                                        >
+                                            <p>
+                                                <strong>SKS Tempuh:</strong>
+                                                {{ slotProps.data.sks_tempuh }}
+                                            </p>
+                                            <p>
+                                                <strong>SKS Sisa:</strong>
+                                                {{ slotProps.data.sks_sisa }}
+                                            </p>
+                                            <p>
+                                                <strong>Studi Tempuh:</strong>
+                                                {{
+                                                    slotProps.data.studi_tempuh
+                                                }}
+                                            </p>
+                                            <p>
+                                                <strong>Studi Sisa:</strong>
+                                                {{ slotProps.data.studi_sisa }}
+                                            </p>
+                                            
+                                        </div>
+                                    </div>
                                 </template>
                             </Column>
                         </DataTable>
@@ -257,20 +289,55 @@ const getGolonganIcon = (golongan) => {
                             <Column field="moora" header="Nilai Akhir" />
                             <Column header="Golongan" field="golongan">
                                 <template #body="slotProps">
-                                    <Tag
-                                        :severity="
-                                            getGolonganClass(
-                                                slotProps.data.golongan
-                                            )
+                                    <div
+                                        @click="
+                                            toggleRowExpansion(slotProps.data)
                                         "
-                                        :icon="
-                                            getGolonganIcon(
-                                                slotProps.data.golongan
-                                            )
-                                        "
+                                        class="cursor-pointer"
                                     >
-                                        {{ slotProps.data.golongan }}
-                                    </Tag>
+                                        <Tag
+                                            :severity="
+                                                getGolonganClass(
+                                                    slotProps.data.golongan
+                                                )
+                                            "
+                                            :icon="
+                                                getGolonganIcon(
+                                                    slotProps.data.golongan
+                                                )
+                                            "
+                                        >
+                                            {{ slotProps.data.golongan }}
+                                        </Tag>
+                                        <div
+                                            v-if="
+                                                expandedRows.includes(
+                                                    slotProps.data
+                                                )
+                                            "
+                                            class="p-2 bg-gray-100 rounded mt-2"
+                                        >
+                                            <p>
+                                                <strong>SKS Tempuh:</strong>
+                                                {{ slotProps.data.sks_tempuh }}
+                                            </p>
+                                            <p>
+                                                <strong>SKS Sisa:</strong>
+                                                {{ slotProps.data.sks_sisa }}
+                                            </p>
+                                            <p>
+                                                <strong>Studi Tempuh:</strong>
+                                                {{
+                                                    slotProps.data.studi_tempuh
+                                                }}
+                                            </p>
+                                            <p>
+                                                <strong>Studi Sisa:</strong>
+                                                {{ slotProps.data.studi_sisa }}
+                                            </p>
+                                            
+                                        </div>
+                                    </div>
                                 </template>
                             </Column>
                         </DataTable>
@@ -304,20 +371,55 @@ const getGolonganIcon = (golongan) => {
                             <Column field="moora" header="Nilai Akhir" />
                             <Column header="Golongan" field="golongan">
                                 <template #body="slotProps">
-                                    <Tag
-                                        :severity="
-                                            getGolonganClass(
-                                                slotProps.data.golongan
-                                            )
+                                    <div
+                                        @click="
+                                            toggleRowExpansion(slotProps.data)
                                         "
-                                        :icon="
-                                            getGolonganIcon(
-                                                slotProps.data.golongan
-                                            )
-                                        "
+                                        class="cursor-pointer"
                                     >
-                                        {{ slotProps.data.golongan }}
-                                    </Tag>
+                                        <Tag
+                                            :severity="
+                                                getGolonganClass(
+                                                    slotProps.data.golongan
+                                                )
+                                            "
+                                            :icon="
+                                                getGolonganIcon(
+                                                    slotProps.data.golongan
+                                                )
+                                            "
+                                        >
+                                            {{ slotProps.data.golongan }}
+                                        </Tag>
+                                        <div
+                                            v-if="
+                                                expandedRows.includes(
+                                                    slotProps.data
+                                                )
+                                            "
+                                            class="p-2 bg-gray-100 rounded mt-2"
+                                        >
+                                            <p>
+                                                <strong>SKS Tempuh:</strong>
+                                                {{ slotProps.data.sks_tempuh }}
+                                            </p>
+                                            <p>
+                                                <strong>SKS Sisa:</strong>
+                                                {{ slotProps.data.sks_sisa }}
+                                            </p>
+                                            <p>
+                                                <strong>Studi Tempuh:</strong>
+                                                {{
+                                                    slotProps.data.studi_tempuh
+                                                }}
+                                            </p>
+                                            <p>
+                                                <strong>Studi Sisa:</strong>
+                                                {{ slotProps.data.studi_sisa }}
+                                            </p>
+                                            
+                                        </div>
+                                    </div>
                                 </template>
                             </Column>
                         </DataTable>

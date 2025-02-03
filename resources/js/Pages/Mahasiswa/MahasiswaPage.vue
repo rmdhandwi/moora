@@ -162,6 +162,23 @@ watch(
     }
 );
 
+watch(
+    () => formMahasiswa.angkatan_id,
+    (newValue) => {
+        // Find the selected angkatan
+        const selectedAngkatan = props.angkatan.find(
+            (angkatan) => angkatan.angkatan_id === newValue
+        );
+
+        // If an angkatan is found, set the dosen_id
+        if (selectedAngkatan) {
+            formMahasiswa.dosen_id = selectedAngkatan.dosen_id; // Set the dosen_id based on the selected angkatan
+        } else {
+            formMahasiswa.dosen_id = ""; // Reset if no angkatan is selected
+        }
+    }
+);
+
 const refresh = () => {
     return new Promise((resolve) => {
         router.visit(route("mahasiswaPage"), {
@@ -543,6 +560,7 @@ const onFileSelect = (event) => {
                                         optionLabel="nama_dosen"
                                         optionValue="dosen_id"
                                         fluid
+                                        disabled
                                         :invalid="
                                             !!formMahasiswa.errors.dosen_id
                                         "

@@ -47,9 +47,9 @@ class Perhitungan extends Controller
         $currentUser = Auth::user();
         // Ambil nama dosen dan tahun angkatan yang terkait
         $usernameWithAngkatan = DosenModel::where('user_id', $currentUser->user_id)
-        ->with(['angkatan' => function ($query) {
-            $query->select('dosen_id', 'tahun_angkatan'); // Kolom yang ingin diambil dari tbl_angkatan
-        }])
+            ->with(['angkatan' => function ($query) {
+                $query->select('dosen_id', 'tahun_angkatan'); // Kolom yang ingin diambil dari tbl_angkatan
+            }])
             ->select('dosen_id', 'nama_dosen') // Kolom yang ingin diambil dari DosenModel
             ->first();
 
@@ -183,8 +183,18 @@ class Perhitungan extends Controller
                 'mahasiswa_id' => $student->mahasiswa_id,
                 'nama_mahasiswa' => $student->nama_mahasiswa,
                 'npm' => $student->npm,
+                'sks_tempuh' => $student->sks_tempuh,
+                'sks_sisa' => $student->sks_sisa,
+                'studi_tempuh' => $student->studi_tempuh,
+                'studi_sisa' => $student->studi_sisa,
+                'sks_total' => $student->sks_total,
+                'studi_total' => $student->studi_total,
                 'nilai_normalisasi' => [],
             ];
+
+
+
+
 
             foreach ($weights as $kriteriaName => $weight) {
                 if (isset($kriteriaValues[$student->mahasiswa_id][$kriteriaName])) {
@@ -206,6 +216,12 @@ class Perhitungan extends Controller
                 'mahasiswa_id' => $studentData['mahasiswa_id'],
                 'nama_mahasiswa' => $studentData['nama_mahasiswa'],
                 'npm' => $studentData['npm'],
+                'sks_tempuh' => $studentData['sks_tempuh'],
+                'sks_sisa' => $studentData['sks_sisa'],
+                'studi_tempuh' => $studentData['studi_tempuh'],
+                'studi_sisa' => $studentData['studi_sisa'],
+                'sks_total' => $studentData['sks_total'],
+                'studi_total' => $studentData['studi_total'],
                 'optimized_values' => [], // Nilai optimasi bobot
                 'benefit_sum' => 0, // Jumlah nilai Benefit
                 'cost_sum' => 0,    // Jumlah nilai Cost
@@ -270,6 +286,8 @@ class Perhitungan extends Controller
                 $studentOptimization['golongan'] = 'DO/Pindah';
             }
         }
+
+        // dd($optimizationData);
 
         $currentUser = Auth::user();
         $username = DosenModel::where('user_id', $currentUser->user_id)
